@@ -23,41 +23,35 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
-import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
-import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-personenkontextworkflow-body.params.js';
-import { PersonenkontextWorkflowResponse } from './response/dbiam-personenkontext-workflow-response.js';
-import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
-import { Personenkontext } from '../domain/personenkontext.js';
-import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
-import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
-import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
-import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { DBiamPersonResponse } from './response/dbiam-person.response.js';
-import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
-import { DbiamCreatePersonWithPersonenkontexteBodyParams } from './param/dbiam-create-person-with-personenkontexte.body.params.js';
-import { PersonPersonenkontext, PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
-import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
-import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
-import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { DbiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
-import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
-import { ConfigService } from '@nestjs/config';
-import { ServerConfig } from '../../../shared/config/index.js';
-import { PortalConfig } from '../../../shared/config/portal.config.js';
-import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
+import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
+import { PersonPersonenkontext, PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
+import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
+import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
+import { Personenkontext } from '../domain/personenkontext.js';
+import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
+import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-update.error.js';
+import { DbiamCreatePersonWithPersonenkontexteBodyParams } from './param/dbiam-create-person-with-personenkontexte.body.params.js';
+import { DbiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
+import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
+import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-personenkontextworkflow-body.params.js';
+import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
+import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
+import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
+import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
+import { DBiamPersonResponse } from './response/dbiam-person.response.js';
+import { PersonenkontextWorkflowResponse } from './response/dbiam-personenkontext-workflow-response.js';
+import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
 
 @UseFilters(new PersonenkontextExceptionFilter(), new PersonenkontexteUpdateExceptionFilter())
 @ApiTags('personenkontext')
@@ -69,10 +63,10 @@ export class DbiamPersonenkontextWorkflowController {
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
         private readonly logger: ClassLogger,
-        private readonly configService: ConfigService<ServerConfig>,
     ) {}
 
     @Get('step')
+    @UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: `Initialize or process data from the person creation form.
                       Valid combinations:
@@ -99,28 +93,8 @@ export class DbiamPersonenkontextWorkflowController {
         const organisations: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
             permissions,
             params.organisationName,
-            undefined,
             params.limit,
         );
-
-        // filter rollenarten
-        let rollenarten: RollenArt[] | undefined = undefined;
-        if (params.requestedWithSystemrecht === RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN) {
-            const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
-
-            rollenarten = mapStringsToRollenArt(portalConfig.LIMITED_ROLLENART_ALLOWLIST || []);
-        }
-
-        // Find all possible roles under the selected Organisation
-        const rollen: Rolle<true>[] = params.organisationId
-            ? await anlage.findRollenForOrganisation(
-                  permissions,
-                  params.rolleName,
-                  params.rollenIds,
-                  params.limit,
-                  rollenarten,
-              )
-            : [];
 
         const organisationsResponse: OrganisationResponseLegacy[] = organisations.map(
             (org: Organisation<true>) => new OrganisationResponseLegacy(org),
@@ -137,7 +111,6 @@ export class DbiamPersonenkontextWorkflowController {
 
         const response: PersonenkontextWorkflowResponse = new PersonenkontextWorkflowResponse(
             organisationsResponse,
-            rollen,
             canCommit,
             params.organisationId,
             params.rollenIds,

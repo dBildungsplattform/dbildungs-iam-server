@@ -26,6 +26,7 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { uniq } from 'lodash-es';
 
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -33,6 +34,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/index.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
@@ -69,6 +71,8 @@ import { PermittedOrgas } from '../../authentication/domain/person-permissions.j
 import { ApplyRollenerweiterungForRolleService } from '../domain/apply-rollenerweiterungen-for-rolle-service.js';
 import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
 import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
+import { RolleResponse } from './rolle.response.js';
+import { FindAvailableRollenForPKCreationQueryParams } from './find-available-rollen-for-pk-creation.query.params.js';
 
 @UseFilters(new RolleExceptionFilter(), new ApplyRollenerweiterungMultiExceptionFilter())
 @ApiTags('rolle')
@@ -174,11 +178,14 @@ export class RolleController {
         const administeredOrganisations: Map<string, Organisation<true>> = await this.organisationRepository.findByIds(
             administeredBySchulstrukturknotenIds,
         );
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
+        const serviceProviders: Map<
+            ServiceProviderID,
+            ServiceProvider<true>
+        > = await this.serviceProviderRepo.findByIds(uniq(rollen.flatMap((r: Rolle<true>) => r.serviceProviderIds)));
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds
-                    .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
+                    .map((id: string) => serviceProviders.get(id))
                     .filter(Boolean);
 
                 const administeredBySchulstrukturknoten: Organisation<true> | undefined = administeredOrganisations.get(
@@ -426,13 +433,11 @@ export class RolleController {
     private async returnRolleWithServiceProvidersResponse(
         rolle: Rolle<true>,
     ): Promise<RolleWithServiceProvidersResponse> {
-        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
-
-        const rolleServiceProviders: ServiceProvider<true>[] = rolle.serviceProviderIds
-            .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-            .filter(Boolean);
-
-        return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+        const serviceProviders: Map<
+            ServiceProviderID,
+            ServiceProvider<true>
+        > = await this.serviceProviderRepo.findByIds(rolle.serviceProviderIds);
+        return new RolleWithServiceProvidersResponse(rolle, Array.from(serviceProviders.values()));
     }
 
     @Get(':rolleId/angebote-via-rollenerweiterungen')
@@ -517,5 +522,41 @@ export class RolleController {
         this.logger.info(
             `applyRollenerweiterungChangesForRolle called by ${permissions.personFields.username} - ${permissions.personFields.id} for rolleId ${params.rolleId} and organisationId ${params.organisationId} completed with complete success.`,
         );
+    }
+
+    @Get('for-personenkontext-creation')
+    @ApiOperation({ description: 'Find available rollen for personenkontext creation.' })
+    @ApiOkResponse({
+        description: 'The available rollen were successfully returned.',
+        type: [RolleResponse],
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get available rollen for personenkontext creation.' })
+    @ApiForbiddenResponse({
+        description: 'Insufficient permissions to get available rollen for personenkontext creation.',
+    })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while getting available rollen for personenkontext creation.',
+    })
+    public async findAvailableRollenForPersonenkontextCreation(
+        @Query() queryParams: FindAvailableRollenForPKCreationQueryParams,
+        @Permissions() permissions: IPersonPermissions,
+    ): Promise<PagedResponse<RolleResponse>> {
+        const rollenAndTotal: [Rolle<true>[], number] =
+            await this.rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions,
+                systemrecht: queryParams.systemrecht,
+                organisationId: queryParams.organisationId,
+                rollenartOfUser: queryParams.rollenartOfUser,
+                rolleName: queryParams.rolleName,
+                rollenIds: queryParams.rollenIds,
+                limit: queryParams.limit,
+                offset: queryParams.offset,
+            });
+        return new PagedResponse<RolleResponse>({
+            total: rollenAndTotal[1],
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? rollenAndTotal[0].length,
+            items: rollenAndTotal[0].map((rolle: Rolle<true>) => new RolleResponse(rolle)),
+        });
     }
 }
