@@ -125,9 +125,15 @@ export class UserExternaldataWorkflowAggregate {
         );
         this.externalPkDataWithVidisAngebotId = this.computeExternalPkDataWithVidisAngebotId(this.mergedExternalPkData);
         this.vidisDienststellennummern = this.computeVidisDienststellennummern(this.externalPkDataWithVidisAngebotId);
-        this.singleRollenart = this.computeSingleRollenart(this.checkedExternalPkData);
+
+        const uniqueRollenarten: RollenArt[] = this.computeUniqueRollenarten(this.checkedExternalPkData);
+        if (uniqueRollenarten.length > 1) {
+            return new MultipleRollenartenError(uniqueRollenarten);
+        }
+        this.singleRollenart = uniqueRollenarten.length === 1 ? uniqueRollenarten[0] : undefined;
+
         this.uniqDienststellenNummern = this.computeUniqDienststellenNummern(this.checkedExternalPkData);
-        this.oxParams = this.computeOxParams();
+        this.oxParams = this.computeOxParams(this.mergedExternalPkData, this.oxLoginId, this.person);
 
         return undefined;
     }
@@ -189,49 +195,50 @@ export class UserExternaldataWorkflowAggregate {
         return uniq(externalPkDataWithVidisAngebotId.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean));
     }
 
-    private computeSingleRollenart(checkedExternalPkData: RequiredExternalPkData[]): RollenArt | undefined {
-        const uniqueRollenarten: RollenArt[] = uniq(
-            checkedExternalPkData.map((pk: RequiredExternalPkData) => pk.rollenart),
-        );
-        if (uniqueRollenarten.length > 1) {
-            throw new MultipleRollenartenError(uniqueRollenarten);
-        }
-        return uniqueRollenarten.length === 1 ? uniqueRollenarten[0] : undefined;
+    private computeUniqueRollenarten(checkedExternalPkData: RequiredExternalPkData[]): RollenArt[] {
+        return uniq(checkedExternalPkData.map((pk: RequiredExternalPkData) => pk.rollenart));
     }
 
     private computeUniqDienststellenNummern(checkedExternalPkData: RequiredExternalPkData[]): string[] {
         return uniq(checkedExternalPkData.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean));
     }
 
-    public hasEmailServiceProvider(): boolean {
-        return (this.mergedExternalPkData ?? []).some((pkData: RequiredExternalPkData) =>
+    private computeOxParams(
+        mergedExternalPkData: RequiredExternalPkData[],
+        oxLoginId: string | undefined,
+        person: Person<true>,
+    ): OxParams | undefined {
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            return this.computeNewOxParams(oxLoginId);
+        }
+        return this.computeOldOxParams(mergedExternalPkData, person);
+    }
+
+    private computeNewOxParams(oxLoginId: string | undefined): NewOxParams | undefined {
+        if (oxLoginId) {
+            return { oxLoginId };
+        }
+        return undefined;
+    }
+
+    private computeOldOxParams(
+        mergedExternalPkData: RequiredExternalPkData[],
+        person: Person<true>,
+    ): OldOxParams | undefined {
+        if (this.hasEmailServiceProvider(mergedExternalPkData) && person.username) {
+            return {
+                contextId: this.contextID,
+                username: person.username,
+            };
+        }
+        return undefined;
+    }
+
+    private hasEmailServiceProvider(mergedExternalPkData: RequiredExternalPkData[]): boolean {
+        return mergedExternalPkData.some((pkData: RequiredExternalPkData) =>
             pkData.serviceProvider.some(
                 (sp: ServiceProvider<true>) => sp.externalSystem === ServiceProviderSystem.EMAIL,
             ),
         );
-    }
-
-    private computeOxParams(): OxParams | undefined {
-        if (this.emailResolverService.shouldUseEmailMicroservice()) {
-            return this.computeNewOxParams();
-        }
-        return this.computeOldOxParams();
-    }
-
-    private computeNewOxParams(): NewOxParams | undefined {
-        if (this.oxLoginId) {
-            return { oxLoginId: this.oxLoginId };
-        }
-        return undefined;
-    }
-
-    private computeOldOxParams(): OldOxParams | undefined {
-        if (this.hasEmailServiceProvider() && this.person?.username) {
-            return {
-                contextId: this.contextID,
-                username: this.person.username,
-            };
-        }
-        return undefined;
     }
 }
