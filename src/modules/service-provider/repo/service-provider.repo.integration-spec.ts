@@ -225,7 +225,7 @@ describe('ServiceProviderRepo', () => {
                     ]);
 
                     const [serviceProviderResult, count]: Counted<ServiceProvider<true>> =
-                        await sut.findByOrganisationsWithMerkmale(orgaIds, 5, 0);
+                        await sut.findByOrganisationsWithMerkmale(orgaIds, { limit: 5, offset: 0 });
 
                     if (orgaIds === 'all') {
                         expect(serviceProviderResult).toHaveLength(serviceProviders.length);
@@ -239,18 +239,42 @@ describe('ServiceProviderRepo', () => {
             },
         );
 
+        it('should filter by kategorie', async () => {
+            const [emailServiceProvider, unterrichtServiceProvider]: [ServiceProvider<true>, ServiceProvider<true>] =
+                await Promise.all([
+                    createAndPersistServiceProvider(em, { kategorie: ServiceProviderKategorie.EMAIL }),
+                    createAndPersistServiceProvider(em, { kategorie: ServiceProviderKategorie.UNTERRICHT }),
+                ]);
+
+            const [emailResult, emailCount]: Counted<ServiceProvider<true>> = await sut.findByOrganisationsWithMerkmale(
+                'all',
+                { kategorien: [ServiceProviderKategorie.EMAIL] },
+            );
+            expect(emailResult).toHaveLength(1);
+            expect(emailResult[0]!.id).toEqual(emailServiceProvider.id);
+            expect(emailCount).toEqual(1);
+
+            const [unterrichtResult, unterrichtCount]: Counted<ServiceProvider<true>> =
+                await sut.findByOrganisationsWithMerkmale('all', {
+                    kategorien: [ServiceProviderKategorie.UNTERRICHT],
+                });
+            expect(unterrichtResult).toHaveLength(1);
+            expect(unterrichtResult[0]!.id).toEqual(unterrichtServiceProvider.id);
+            expect(unterrichtCount).toEqual(1);
+        });
+
         it('should respect the limit and offset', async () => {
             const total: number = 10;
             await Promise.all(Array.from({ length: total }, () => createAndPersistServiceProvider(em)));
 
             const limit: number = 5;
             const [serviceProviderWithoutOffsetResult, countWithoutOffset]: Counted<ServiceProvider<true>> =
-                await sut.findByOrganisationsWithMerkmale('all', limit, 0);
+                await sut.findByOrganisationsWithMerkmale('all', { limit, offset: 0 });
             expect(serviceProviderWithoutOffsetResult).toHaveLength(limit);
             expect(countWithoutOffset).toEqual(total);
 
             const [serviceProviderWithOffsetResult, countWithOffset]: Counted<ServiceProvider<true>> =
-                await sut.findByOrganisationsWithMerkmale('all', limit, 5);
+                await sut.findByOrganisationsWithMerkmale('all', { limit, offset: 5 });
             expect(serviceProviderWithOffsetResult).toHaveLength(limit);
             expect(countWithOffset).toEqual(total);
 
@@ -276,8 +300,7 @@ describe('ServiceProviderRepo', () => {
 
             const [serviceProviderResult]: Counted<ServiceProvider<true>> = await sut.findByOrganisationsWithMerkmale(
                 'all',
-                5,
-                0,
+                { limit: 5, offset: 0 },
             );
 
             [

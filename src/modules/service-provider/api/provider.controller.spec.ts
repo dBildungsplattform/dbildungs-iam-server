@@ -586,42 +586,54 @@ describe('Provider Controller Test', () => {
     });
 
     describe('getManageableServiceProviders', () => {
+        function createManageableObjects(
+            serviceProviders: ServiceProvider<true>[],
+        ): ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount[] {
+            return serviceProviders.map((serviceProvider: ServiceProvider<true>) => ({
+                serviceProvider: serviceProvider,
+                organisation: DoFactory.createOrganisation(true),
+                rollen: [DoFactory.createRolle(true)],
+                hasRollenerweiterungen: true,
+                enrichedRollenerweiterungen: [
+                    {
+                        serviceProviderId: serviceProvider.id,
+                        organisation: DoFactory.createOrganisation(true),
+                        rolle: DoFactory.createRolle(true),
+                    },
+                ],
+                hasSomeVerwaltenPermission: true,
+            }));
+        }
+
         it.each([
             { limit: 2, offset: 1 },
             { limit: undefined, offset: undefined },
         ])(
             'should return paged manageable service providers with correct offset and limit for %s',
-            async (params: ManageableServiceProvidersParams) => {
+            async (pagingParams: Pick<ManageableServiceProvidersParams, 'limit' | 'offset'>) => {
                 const total: number = 10;
                 const serviceProviders: Array<ServiceProvider<true>> = [
-                    DoFactory.createServiceProvider(true),
-                    DoFactory.createServiceProvider(true),
+                    DoFactory.createServiceProvider(true, { kategorie: ServiceProviderKategorie.EMAIL }),
+                    DoFactory.createServiceProvider(true, { kategorie: ServiceProviderKategorie.UNTERRICHT }),
                 ];
-
                 const manageableObjects: ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount[] =
-                    serviceProviders.map((serviceProvider: ServiceProvider<true>) => ({
-                        serviceProvider: serviceProvider,
-                        organisation: DoFactory.createOrganisation(true),
-                        rollen: [DoFactory.createRolle(true)],
-                        hasRollenerweiterungen: true,
-                        enrichedRollenerweiterungen: [
-                            {
-                                serviceProviderId: serviceProvider.id,
-                                organisation: DoFactory.createOrganisation(true),
-                                rolle: DoFactory.createRolle(true),
-                            },
-                        ],
-                        hasSomeVerwaltenPermission: true,
-                    }));
+                    createManageableObjects(serviceProviders);
 
                 serviceProviderServiceMock.findAuthorized.mockResolvedValue([manageableObjects, total]);
 
+                const params: ManageableServiceProvidersParams = { kategorien: [], ...pagingParams };
                 const result: RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse> =
                     await providerController.getManageableServiceProviders(personPermissionsMock, params);
 
+                expect(serviceProviderServiceMock.findAuthorized).toHaveBeenCalledWith(personPermissionsMock, {
+                    kategorien: [],
+                    limit: pagingParams.limit,
+                    offset: pagingParams.offset,
+                });
+
                 expect(result).toBeDefined();
-                expect(result.offset).toBe(params.offset ?? 0);
-                expect(result.limit).toBe(params.limit ?? total);
+                expect(result.offset).toBe(pagingParams.offset ?? 0);
+                expect(result.limit).toBe(pagingParams.limit ?? total);
                 expect(result.items).toHaveLength(2);
                 expect(result.items[0]).toBeInstanceOf(ManageableServiceProviderSimpleListEntryResponse);
                 expect(
@@ -633,6 +645,32 @@ describe('Provider Controller Test', () => {
                         (serviceProvider: ServiceProvider<true>) => serviceProvider.rollenartenWhitelist,
                     ),
                 );
+            },
+        );
+
+        it.each([[ServiceProviderKategorie.EMAIL], [ServiceProviderKategorie.UNTERRICHT]])(
+            'should forward the kategorie filter and only return matching service providers for %s',
+            async (kategorie: ServiceProviderKategorie) => {
+                const matchingServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    kategorie,
+                });
+                const manageableObjects: ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount[] =
+                    createManageableObjects([matchingServiceProvider]);
+
+                serviceProviderServiceMock.findAuthorized.mockResolvedValue([manageableObjects, 1]);
+
+                const params: ManageableServiceProvidersParams = { kategorien: [kategorie], limit: 10, offset: 0 };
+                const result: RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse> =
+                    await providerController.getManageableServiceProviders(personPermissionsMock, params);
+
+                expect(serviceProviderServiceMock.findAuthorized).toHaveBeenCalledWith(personPermissionsMock, {
+                    kategorien: [kategorie],
+                    limit: 10,
+                    offset: 0,
+                });
+                expect(result.items).toHaveLength(1);
+                expect(result.items[0]?.kategorie).toBe(kategorie);
+                expect(result.items[0]?.id).toBe(matchingServiceProvider.id);
             },
         );
     });
@@ -713,7 +751,7 @@ describe('Provider Controller Test', () => {
         });
 
         it('should handle undefined rollenerweiterungenWithName', async () => {
-            const params: ManageableServiceProvidersParams = { limit: 10, offset: 0 };
+            const params: ManageableServiceProvidersParams = { kategorien: [], limit: 10, offset: 0 };
             const total: number = 1;
             const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
 
