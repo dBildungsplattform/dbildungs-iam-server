@@ -61,8 +61,16 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { FindRollenerweiterungQueryParams } from './find-rollenerweiterung-query.params.js';
+import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
+import { ApplyRollenerweiterungChangesBodyParams } from './apply-rollenerweiterung-changes.body.params.js';
+import { ApplyRollenerweiterungForRollePathParams } from './apply-rollenerweiterung-for-rolle-changes.path.params.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
+import { ApplyRollenerweiterungForRolleService } from '../domain/apply-rollenerweiterungen-for-rolle-service.js';
+import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
+import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
 
-@UseFilters(new RolleExceptionFilter())
+@UseFilters(new RolleExceptionFilter(), new ApplyRollenerweiterungMultiExceptionFilter())
 @ApiTags('rolle')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
@@ -78,6 +86,7 @@ export class RolleController {
         private readonly logger: ClassLogger,
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly rollenerweiterungFactory: RollenerweiterungFactory,
+        private readonly applyRollenerweiterungService: ApplyRollenerweiterungForRolleService,
     ) {}
 
     @Get()
@@ -95,10 +104,35 @@ export class RolleController {
         @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
         let rollenAndTotal: [Rolle<true>[], number];
-        if (
-            queryParams.systemrechte &&
-            queryParams.systemrechte.length === 1 &&
-            queryParams.systemrechte[0] === RollenSystemRechtEnum.ROLLEN_ERWEITERN
+        const systemrechteSet: Set<RollenSystemRechtEnum> = new Set(queryParams.systemrechte ?? []);
+
+        if (systemrechteSet.size === 1 && systemrechteSet.has(RollenSystemRechtEnum.IMPORT_DURCHFUEHREN)) {
+            rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
+                permissions,
+                searchStr: queryParams.searchStr,
+                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                rollenArten: queryParams.rollenarten,
+                limit: queryParams.limit,
+                offset: queryParams.offset,
+            });
+        } else if (systemrechteSet.size === 1 && systemrechteSet.has(RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN)) {
+            rollenAndTotal = await this.rolleRepo.findMptRollenAuthorized(
+                permissions,
+                false,
+                queryParams.searchStr,
+                queryParams.limit,
+                queryParams.offset,
+                queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                queryParams.rolleIds,
+            );
+        } else if (
+            // covers plain [ROLLEN_ERWEITERN], and the combo [ROLLEN_ERWEITERN, MPT_ROLLEN_VERWALTEN]
+            systemrechteSet.has(RollenSystemRechtEnum.ROLLEN_ERWEITERN) &&
+            Array.from(systemrechteSet).every(
+                (recht: RollenSystemRechtEnum) =>
+                    recht === RollenSystemRechtEnum.ROLLEN_ERWEITERN ||
+                    recht === RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN,
+            )
         ) {
             rollenAndTotal = await this.rolleFindService.findRollenAvailableForErweiterung({
                 permissions,
@@ -107,19 +141,9 @@ export class RolleController {
                 rollenArten: queryParams.rollenarten,
                 limit: queryParams.limit,
                 offset: queryParams.offset,
-            });
-        } else if (
-            queryParams.systemrechte &&
-            queryParams.systemrechte.length === 1 &&
-            queryParams.systemrechte[0] === RollenSystemRechtEnum.IMPORT_DURCHFUEHREN
-        ) {
-            rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
-                permissions,
-                searchStr: queryParams.searchStr,
-                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
-                rollenArten: queryParams.rollenarten,
-                limit: queryParams.limit,
-                offset: queryParams.offset,
+                requestedSystemrechte: queryParams.systemrechte?.map((value: RollenSystemRechtEnum) =>
+                    RollenSystemRecht.getByName(value),
+                ),
             });
         } else {
             rollenAndTotal = await this.rolleRepo.findRollenAuthorized(
@@ -133,7 +157,6 @@ export class RolleController {
                 queryParams.rolleIds,
             );
         }
-
         const [rollen, total]: [Rolle<true>[], number] = rollenAndTotal;
         if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
@@ -410,5 +433,89 @@ export class RolleController {
             .filter(Boolean);
 
         return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+    }
+
+    @Get(':rolleId/angebote-via-rollenerweiterungen')
+    @ApiOperation({ description: 'Get Erweiterte Angebote for a rolle.' })
+    @ApiOkResponse({
+        description: 'The Erweiterten Angebote were successfully returned.',
+        type: ServiceProviderResponse,
+        isArray: true,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get RollenErweiterungen.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permission to get RollenErweiterungen.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting RollenErweiterungen.' })
+    public async findRollenerweiterungenForRolleAndOrga(
+        @Param() params: FindRolleByIdParams,
+        @Query() queryParams: FindRollenerweiterungQueryParams,
+        @Permissions() permissions: IPersonPermissions,
+    ): Promise<ServiceProviderResponse[]> {
+        const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(params.rolleId, permissions);
+        if (!rolleResult.ok) {
+            throw new EntityNotFoundError('Rolle', params.rolleId);
+        }
+        const permittedOrgaIds: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht([
+            RollenSystemRecht.getByName(RollenSystemRechtEnum.ROLLEN_ERWEITERN),
+            RollenSystemRecht.getByName(RollenSystemRechtEnum.ROLLEN_VERWALTEN),
+        ]);
+
+        let rollenerweiterungen: Rollenerweiterung<true>[];
+        if (!queryParams.organisationId) {
+            rollenerweiterungen = await this.rollenerweiterungRepo.findManyByRolleId(params.rolleId);
+        } else {
+            rollenerweiterungen = await this.rollenerweiterungRepo.findManyByOrganisationAndRolle([
+                { organisationId: queryParams.organisationId, rolleId: params.rolleId },
+            ]);
+        }
+        if (!permittedOrgaIds.all) {
+            rollenerweiterungen = rollenerweiterungen.filter((re: Rollenerweiterung<true>) =>
+                permittedOrgaIds.orgaIds.includes(re.organisationId),
+            );
+        }
+
+        const serviceProviders: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
+            rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.serviceProviderId),
+        );
+
+        return Array.from(serviceProviders.values()).map(
+            (sp: ServiceProvider<true>) => new ServiceProviderResponse(sp),
+        );
+    }
+
+    @Post(':rolleId/organisation/:organisationId/apply')
+    @ApiOperation({ description: 'Apply Erweiterte Angebote changes for a rolle.' })
+    @ApiOkResponse({
+        description: 'The Erweiterten Angebote were successfully updated.',
+        type: ServiceProviderResponse,
+        isArray: true,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update RollenErweiterungen.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permission to update RollenErweiterungen.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating RollenErweiterungen.' })
+    public async applyRollenerweiterungChangesForRolle(
+        @Param() params: ApplyRollenerweiterungForRollePathParams,
+        @Body() body: ApplyRollenerweiterungChangesBodyParams,
+        @Permissions() permissions: IPersonPermissions,
+    ): Promise<void> {
+        const rolleResult: Result<Rolle<true>> = await this.rolleRepo.findByIdAuthorized(params.rolleId, permissions);
+        if (!rolleResult.ok) {
+            throw new EntityNotFoundError('Rolle', params.rolleId);
+        }
+
+        const result: Result<null, ApplyRollenerweiterungError | EntityNotFoundError | MissingPermissionsError> =
+            await this.applyRollenerweiterungService.applyRollenerweiterungChangesForRolle(
+                params.organisationId,
+                params.rolleId,
+                body,
+                permissions,
+            );
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        this.logger.info(
+            `applyRollenerweiterungChangesForRolle called by ${permissions.personFields.username} - ${permissions.personFields.id} for rolleId ${params.rolleId} and organisationId ${params.organisationId} completed with complete success.`,
+        );
     }
 }
