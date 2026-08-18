@@ -580,6 +580,54 @@ describe('RolleService', () => {
             });
         });
 
+        it('should use permitted organisations and parents if empty organisation filter is provided', async () => {
+            const permissionsMock: DeepMocked<IPersonPermissions> = createMock(PersonPermissions);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: ['orga-1'],
+            });
+            organisationRepoMock.findByIds.mockResolvedValueOnce(
+                new Map([
+                    ['orga-1', DoFactory.createOrganisation(true, { id: 'orga-1', typ: OrganisationsTyp.SCHULE })],
+                ]),
+            );
+            organisationRepoMock.findParentOrgasForIds.mockResolvedValueOnce([
+                DoFactory.createOrganisation(true, { id: 'parent-1' }),
+            ]);
+            rolleRepoMock.findBy.mockResolvedValueOnce([[DoFactory.createRolle(true)], 1]);
+
+            await rolleFindService.findMptRollenAuthorized(
+                permissionsMock,
+                includeTechnische,
+                searchStr,
+                limit,
+                offset,
+                [],
+                rolleIds,
+            );
+
+            expect(organisationRepoMock.findParentOrgasForIds).toHaveBeenCalledWith(['orga-1']);
+            expect(rolleRepoMock.findBy).toHaveBeenCalledWith({
+                includeTechnische,
+                searchStr,
+                limit,
+                offset,
+                allowedOrganisationIds: ['orga-1', 'parent-1'],
+                rolleIds,
+                requireMerkmale: [RollenMerkmal.MPT_ROLLE],
+                orderByRollenArtAndName: true,
+                rollenArten: [
+                    RollenArt.LEIT,
+                    RollenArt.LEHR,
+                    RollenArt.LERN,
+                    RollenArt.SORGBER,
+                    RollenArt.SCHB,
+                    RollenArt.NLEHR,
+                ],
+            });
+        });
+
         it('should intersect requested organisationIds with permitted ones and add parent organisations', async () => {
             const permissionsMock: DeepMocked<IPersonPermissions> = createMock(PersonPermissions);
 
