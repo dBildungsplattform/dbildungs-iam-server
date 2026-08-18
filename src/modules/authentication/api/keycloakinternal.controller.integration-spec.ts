@@ -13,7 +13,6 @@ import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/respo
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
 import { EntityNotFoundError, MultipleRollenartenError } from '../../../shared/error/index.js';
-import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { Ok } from '../../../shared/util/result.js';
@@ -455,7 +454,7 @@ describe('KeycloakInternalController', () => {
             );
         });
 
-        it('should throw error if aggregate doesnt initialize fields field correctly', async () => {
+        it('should throw EntityNotFoundError if person not found during workflow initialization', async () => {
             const keycloakSub: string = faker.string.uuid();
             const pkExternalData: ExternalPkData[] = [
                 {
@@ -477,7 +476,7 @@ describe('KeycloakInternalController', () => {
             dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
 
             await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toBeInstanceOf(
-                UserExternalDataWorkflowError,
+                EntityNotFoundError,
             );
         });
 

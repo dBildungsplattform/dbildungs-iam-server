@@ -86,8 +86,10 @@ export class KeycloakInternalController {
         error: Option<DomainError>,
         workflow: UserExternaldataWorkflowAggregate,
     ): asserts workflow is InitializedWorkflow {
+        if (error) {
+            throw error;
+        }
         if (
-            error ||
             !workflow.person ||
             !workflow.checkedExternalPkData ||
             !workflow.mergedExternalPkData ||
