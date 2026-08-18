@@ -20,8 +20,10 @@ import {
     ExternalPkData,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
+import { NewOxParams, OldOxParams, OxParams } from '../api/externaldata/user-externaldata-ox.response.js';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -35,6 +37,18 @@ export class UserExternaldataWorkflowAggregate {
     public checkedExternalPkData?: RequiredExternalPkData[];
 
     public erweiterteSP?: ErweiterterServiceProviderForPK[];
+
+    public mergedExternalPkData?: RequiredExternalPkData[];
+
+    public externalPkDataWithVidisAngebotId?: RequiredExternalPkData[];
+
+    public vidisDienststellennummern?: string[];
+
+    public singleRollenart?: RollenArt;
+
+    public uniqDienststellenNummern?: string[];
+
+    public oxParams?: OxParams;
 
     private constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
@@ -104,9 +118,24 @@ export class UserExternaldataWorkflowAggregate {
             }
         }
 
-        // Filtering out !expk.kennung || !expk.rollenart automatically leads to only valid organisations of type SCHOOLS are included
-        // Additionally If there is an data-invalidity the Endpoint still works (If throwing Errors not) and allows the Keycloak the get the data for the other Personenkontexte
-        this.checkedExternalPkData = externalPkData
+        this.checkedExternalPkData = this.computeCheckedExternalPkData(externalPkData);
+        this.mergedExternalPkData = this.computeMergedExternalPkData(
+            this.checkedExternalPkData,
+            this.erweiterteSP ?? [],
+        );
+        this.externalPkDataWithVidisAngebotId = this.computeExternalPkDataWithVidisAngebotId(this.mergedExternalPkData);
+        this.vidisDienststellennummern = this.computeVidisDienststellennummern(this.externalPkDataWithVidisAngebotId);
+        this.singleRollenart = this.computeSingleRollenart(this.checkedExternalPkData);
+        this.uniqDienststellenNummern = this.computeUniqDienststellenNummern(this.checkedExternalPkData);
+        this.oxParams = this.computeOxParams();
+
+        return undefined;
+    }
+
+    // Filtering out !expk.kennung || !expk.rollenart automatically leads to only valid organisations of type SCHOOLS are included
+    // Additionally If there is an data-invalidity the Endpoint still works (If throwing Errors not) and allows the Keycloak the get the data for the other Personenkontexte
+    private computeCheckedExternalPkData(externalPkData: ExternalPkData[]): RequiredExternalPkData[] {
+        return externalPkData
             .map((expk: ExternalPkData) => {
                 if (expk.pkId && expk.kennung && expk.rollenart && expk.serviceProvider) {
                     return {
@@ -120,12 +149,10 @@ export class UserExternaldataWorkflowAggregate {
                 return undefined;
             })
             .filter((item: RequiredExternalPkData | undefined): item is RequiredExternalPkData => item !== undefined);
-
-        return undefined;
     }
 
-    public static mergeServiceProviders(
-        externalPkData: RequiredExternalPkData[],
+    private computeMergedExternalPkData(
+        checkedExternalPkData: RequiredExternalPkData[],
         erweiterteSP: ErweiterterServiceProviderForPK[],
     ): RequiredExternalPkData[] {
         const erweiterungenMap: Map<string, ServiceProvider<true>[]> = new Map<string, ServiceProvider<true>[]>();
@@ -138,7 +165,7 @@ export class UserExternaldataWorkflowAggregate {
             erweiterungenMap.get(pkId)?.push(sp);
         }
 
-        return externalPkData.map((pk: RequiredExternalPkData) => {
+        return checkedExternalPkData.map((pk: RequiredExternalPkData) => {
             const extraSp: ServiceProvider<true>[] = erweiterungenMap.get(pk.pkId) ?? [];
             const mergedSp: ServiceProvider<true>[] = [...pk.serviceProvider, ...extraSp];
             const uniqueSp: ServiceProvider<true>[] = uniqBy(mergedSp, 'id');
@@ -150,25 +177,61 @@ export class UserExternaldataWorkflowAggregate {
         });
     }
 
-    public static getExternalPkDataWithSpWithVidisAngebotId(
-        externalPkData: RequiredExternalPkData[],
+    private computeExternalPkDataWithVidisAngebotId(
+        mergedExternalPkData: RequiredExternalPkData[],
     ): RequiredExternalPkData[] {
-        return externalPkData.filter((pk: RequiredExternalPkData): pk is RequiredExternalPkData =>
+        return mergedExternalPkData.filter((pk: RequiredExternalPkData): pk is RequiredExternalPkData =>
             pk.serviceProvider.some((sp: ServiceProvider<true>) => Boolean(sp.vidisAngebotId)),
         );
     }
 
-    public static getUniqDienststellenNummern(externalPkData: RequiredExternalPkData[]): string[] {
-        return uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean));
+    private computeVidisDienststellennummern(externalPkDataWithVidisAngebotId: RequiredExternalPkData[]): string[] {
+        return uniq(externalPkDataWithVidisAngebotId.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean));
     }
 
-    public static getSingleRollenart(externalPkData: RequiredExternalPkData[]): RollenArt | undefined {
-        const uniqueRollenarten: RollenArt[] = uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.rollenart));
+    private computeSingleRollenart(checkedExternalPkData: RequiredExternalPkData[]): RollenArt | undefined {
+        const uniqueRollenarten: RollenArt[] = uniq(
+            checkedExternalPkData.map((pk: RequiredExternalPkData) => pk.rollenart),
+        );
         if (uniqueRollenarten.length > 1) {
             throw new MultipleRollenartenError(uniqueRollenarten);
         }
-        const rollenArt: RollenArt | undefined = uniqueRollenarten.length === 1 ? uniqueRollenarten[0] : undefined;
+        return uniqueRollenarten.length === 1 ? uniqueRollenarten[0] : undefined;
+    }
 
-        return rollenArt;
+    private computeUniqDienststellenNummern(checkedExternalPkData: RequiredExternalPkData[]): string[] {
+        return uniq(checkedExternalPkData.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean));
+    }
+
+    public hasEmailServiceProvider(): boolean {
+        return (this.mergedExternalPkData ?? []).some((pkData: RequiredExternalPkData) =>
+            pkData.serviceProvider.some(
+                (sp: ServiceProvider<true>) => sp.externalSystem === ServiceProviderSystem.EMAIL,
+            ),
+        );
+    }
+
+    private computeOxParams(): OxParams | undefined {
+        if (this.emailResolverService.shouldUseEmailMicroservice()) {
+            return this.computeNewOxParams();
+        }
+        return this.computeOldOxParams();
+    }
+
+    private computeNewOxParams(): NewOxParams | undefined {
+        if (this.oxLoginId) {
+            return { oxLoginId: this.oxLoginId };
+        }
+        return undefined;
+    }
+
+    private computeOldOxParams(): OldOxParams | undefined {
+        if (this.hasEmailServiceProvider() && this.person?.username) {
+            return {
+                contextId: this.contextID,
+                username: this.person.username,
+            };
+        }
+        return undefined;
     }
 }

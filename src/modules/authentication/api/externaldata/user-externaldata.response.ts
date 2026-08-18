@@ -1,9 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { uniq } from 'lodash-es';
 import { Person } from '../../../person/domain/person.js';
-import { ErweiterterServiceProviderForPK } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
-import { UserExternaldataWorkflowAggregate } from '../../domain/user-extenaldata.workflow.js';
 import { RequiredExternalPkData } from '../authentication.controller.js';
 import { UserExternalDataResponseIqshHelpdeskPk } from './user-externaldata-iqshhelpdesk-pk.response.js';
 import { UserExternalDataResponseIqshHelpdesk } from './user-externaldata-iqshhelpdesk.response.js';
@@ -14,6 +11,16 @@ import { UserExeternalDataResponseOpsh } from './user-externaldata-opsh.response
 import { NewOxParams, OldOxParams, UserExternalDataResponseOx } from './user-externaldata-ox.response.js';
 import { UserExternalDataResponsePolyteia } from './user-externaldata-polyteia.response.js';
 import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.response.js';
+
+export type ExternalDataWorkflowData = {
+    person: Person<true>;
+    checkedExternalPkData: RequiredExternalPkData[];
+    vidisDienststellennummern: string[];
+    singleRollenart: RollenArt | undefined;
+    uniqDienststellenNummern: string[];
+    email?: string;
+    oxParams?: OldOxParams | NewOxParams;
+};
 
 export class UserExternalDataResponse {
     //optional, um den Zugriff auf OX zu verhindern, falls kein Lehrerkontext mehr an der Person hängt
@@ -56,129 +63,49 @@ export class UserExternalDataResponse {
         this.polyteia = polyteia;
     }
 
-    public static createNew(
-        person: Person<true>,
-        externalPkData: RequiredExternalPkData[],
-        erweiterteSP: ErweiterterServiceProviderForPK[],
-        oxParams?: OldOxParams | NewOxParams,
-        email?: string,
-    ): UserExternalDataResponse {
-        const ox: Option<UserExternalDataResponseOx> = oxParams && UserExternalDataResponseOx.createNew(oxParams);
+    public static createNew(workflowData: ExternalDataWorkflowData): UserExternalDataResponse {
+        const ox: Option<UserExternalDataResponseOx> =
+            workflowData.oxParams && UserExternalDataResponseOx.createNew(workflowData.oxParams);
 
-        const itslearning: UserExeternalDataResponseItslearning =
-            UserExternalDataResponse.createItslearningResponse(person);
-
-        const vidis: UserExeternalDataResponseVidis = UserExternalDataResponse.createVidisResponse(
-            person,
-            externalPkData,
-            erweiterteSP,
-            email,
+        const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(
+            workflowData.person.id,
         );
 
-        const opsh: UserExeternalDataResponseOpsh = UserExternalDataResponse.createOpshResponse(
-            externalPkData,
-            person,
-            email,
+        const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(
+            workflowData.person.id,
+            workflowData.person.vorname,
+            workflowData.person.familienname,
+            workflowData.singleRollenart,
+            workflowData.email,
+            workflowData.vidisDienststellennummern,
+        );
+
+        const opsh: UserExeternalDataResponseOpsh = new UserExeternalDataResponseOpsh(
+            workflowData.person.vorname,
+            workflowData.person.familienname,
+            workflowData.checkedExternalPkData.map(
+                (pk: RequiredExternalPkData) => new UserExeternalDataResponseOpshPk(pk.rollenart, pk.kennung),
+            ),
+            workflowData.email,
         );
 
         const onlineDateiablage: UserExeternalDataResponseOnlineDateiablage =
-            UserExternalDataResponse.createOnlineDateiablageResponse(person);
+            new UserExeternalDataResponseOnlineDateiablage(workflowData.person.id);
 
-        const iqshHelpdesk: UserExternalDataResponseIqshHelpdesk = UserExternalDataResponse.createIqshHelpdeskResponse(
-            externalPkData,
-            person,
-            email,
-        );
-
-        const polyteia: UserExternalDataResponsePolyteia =
-            UserExternalDataResponse.createPolyteiaResponse(externalPkData);
-
-        return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage, iqshHelpdesk, polyteia);
-    }
-
-    private static createItslearningResponse(person: Person<true>): UserExeternalDataResponseItslearning {
-        return new UserExeternalDataResponseItslearning(person.id);
-    }
-
-    private static createMergedExternalPkData(
-        externalPkData: RequiredExternalPkData[],
-        erweiterteSP: ErweiterterServiceProviderForPK[],
-    ): RequiredExternalPkData[] {
-        return UserExternaldataWorkflowAggregate.mergeServiceProviders(externalPkData, erweiterteSP);
-    }
-
-    private static createExternalPkDataWithVidisAngebotId(
-        mergedExternalPkData: RequiredExternalPkData[],
-    ): RequiredExternalPkData[] {
-        return UserExternaldataWorkflowAggregate.getExternalPkDataWithSpWithVidisAngebotId(mergedExternalPkData);
-    }
-
-    private static createVidisResponse(
-        person: Person<true>,
-        externalPkData: RequiredExternalPkData[],
-        erweiterteSP: ErweiterterServiceProviderForPK[],
-        email?: string,
-    ): UserExeternalDataResponseVidis {
-        const mergedExternalPkData: RequiredExternalPkData[] = UserExternalDataResponse.createMergedExternalPkData(
-            externalPkData,
-            erweiterteSP,
-        );
-        const externalPkDataWithVidisAngebotId: RequiredExternalPkData[] =
-            UserExternalDataResponse.createExternalPkDataWithVidisAngebotId(mergedExternalPkData);
-        const uniqueDienststellennummern: string[] = uniq(
-            externalPkDataWithVidisAngebotId.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean),
-        );
-        const rollenArt: RollenArt | undefined = UserExternaldataWorkflowAggregate.getSingleRollenart(externalPkData);
-
-        return new UserExeternalDataResponseVidis(
-            person.id,
-            person.vorname,
-            person.familienname,
-            rollenArt,
-            email,
-            uniqueDienststellennummern,
-        );
-    }
-
-    private static createOpshResponse(
-        externalPkData: RequiredExternalPkData[],
-        person: Person<true>,
-        email?: string,
-    ): UserExeternalDataResponseOpsh {
-        return new UserExeternalDataResponseOpsh(
-            person.vorname,
-            person.familienname,
-            externalPkData.map(
-                (pk: RequiredExternalPkData) => new UserExeternalDataResponseOpshPk(pk.rollenart, pk.kennung),
-            ),
-            email,
-        );
-    }
-
-    private static createOnlineDateiablageResponse(person: Person<true>): UserExeternalDataResponseOnlineDateiablage {
-        return new UserExeternalDataResponseOnlineDateiablage(person.id);
-    }
-
-    private static createIqshHelpdeskResponse(
-        externalPkData: RequiredExternalPkData[],
-        person: Person<true>,
-        email?: string,
-    ): UserExternalDataResponseIqshHelpdesk {
-        return new UserExternalDataResponseIqshHelpdesk(
-            person.vorname,
-            person.familienname,
-            externalPkData.map(
+        const iqshHelpdesk: UserExternalDataResponseIqshHelpdesk = new UserExternalDataResponseIqshHelpdesk(
+            workflowData.person.vorname,
+            workflowData.person.familienname,
+            workflowData.checkedExternalPkData.map(
                 (pk: RequiredExternalPkData) => new UserExternalDataResponseIqshHelpdeskPk(pk.rolleId, pk.kennung),
             ),
-            email,
+            workflowData.email,
         );
-    }
 
-    private static createPolyteiaResponse(externalPkData: RequiredExternalPkData[]): UserExternalDataResponsePolyteia {
-        const rollenArt: RollenArt | undefined = UserExternaldataWorkflowAggregate.getSingleRollenart(externalPkData);
-        const dienststellenNummern: string[] =
-            UserExternaldataWorkflowAggregate.getUniqDienststellenNummern(externalPkData);
+        const polyteia: UserExternalDataResponsePolyteia = new UserExternalDataResponsePolyteia(
+            workflowData.uniqDienststellenNummern,
+            workflowData.singleRollenart,
+        );
 
-        return new UserExternalDataResponsePolyteia(dienststellenNummern, rollenArt);
+        return new UserExternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage, iqshHelpdesk, polyteia);
     }
 }

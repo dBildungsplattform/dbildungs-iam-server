@@ -1,27 +1,27 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ConfigService } from '@nestjs/config';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
+import { EmailAddress } from '../../../email/modules/core/domain/email-address.js';
+import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 import { DomainError } from '../../../shared/error/index.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { EmailAddressNotFoundError } from '../../email/error/email-address-not-found.error.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import {
     DBiamPersonenkontextRepo,
     ErweiterterServiceProviderForPK,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
-import { RequiredExternalPkData } from '../api/keycloakinternal.controller.js';
-import { EmailAddressNotFoundError } from '../../email/error/email-address-not-found.error.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { Err, Ok } from '../../../shared/util/result.js';
-import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
-import { EmailAddress } from '../../../email/modules/core/domain/email-address.js';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { PersonEmailResponse } from '../../person/api/person-email-response.js';
-import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { RequiredExternalPkData } from '../api/keycloakinternal.controller.js';
+import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
 
 describe('UserExternaldataWorkflow', () => {
     let sut: UserExternaldataWorkflowAggregate;
@@ -296,8 +296,26 @@ describe('UserExternaldataWorkflow', () => {
         });
     });
 
-    describe('mergeServiceProviders', () => {
-        it('should merge service providers for matching pkId', () => {
+    describe('mergedExternalPkData', () => {
+        const createPersonMock: () => Person<true> = () =>
+            Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+            );
+
+        beforeEach(() => {
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+        });
+
+        it('should merge service providers for matching pkId', async () => {
+            const person: Person<true> = createPersonMock();
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
@@ -313,12 +331,13 @@ describe('UserExternaldataWorkflow', () => {
                 serviceProvider: DoFactory.createServiceProvider(true, { id: 'sp2', name: 'Provider 2' }),
             };
 
-            const result: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
-                externalPkData,
-                [erweitererSP],
-            );
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([erweitererSP]);
 
-            expect(result[0]!.serviceProvider).toEqual(
+            await sut.initialize(person.id);
+
+            expect(sut.mergedExternalPkData![0]!.serviceProvider).toEqual(
                 expect.arrayContaining([
                     expect.objectContaining({ id: 'sp1', name: 'Provider 1' }),
                     expect.objectContaining({ id: 'sp2', name: 'Provider 2' }),
@@ -326,31 +345,35 @@ describe('UserExternaldataWorkflow', () => {
             );
         });
 
-        it('should not add duplicates when merging', () => {
+        it('should not add duplicates when merging', async () => {
+            const person: Person<true> = createPersonMock();
+            const sp1: ServiceProvider<true> = DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' });
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
                     rolleId: 'rolle1',
                     rollenart: RollenArt.LEHR,
                     kennung: faker.string.alpha(),
-                    serviceProvider: [DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' })],
+                    serviceProvider: [sp1],
                 },
             ];
 
             const erweitererSP: ErweiterterServiceProviderForPK = {
                 personenkontext: DoFactory.createPersonenkontext(true, { id: 'pk1' }),
-                serviceProvider: DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' }),
+                serviceProvider: sp1,
             };
 
-            const result: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
-                externalPkData,
-                [erweitererSP],
-            );
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([erweitererSP]);
 
-            expect(result[0]!.serviceProvider).toHaveLength(1);
+            await sut.initialize(person.id);
+
+            expect(sut.mergedExternalPkData![0]!.serviceProvider).toHaveLength(1);
         });
 
-        it('should handle empty personenKontextErweiterungen', () => {
+        it('should handle empty personenKontextErweiterungen', async () => {
+            const person: Person<true> = createPersonMock();
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
@@ -361,33 +384,37 @@ describe('UserExternaldataWorkflow', () => {
                 },
             ];
 
-            const result: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
-                externalPkData,
-                [],
-            );
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
 
-            expect(result).toHaveLength(1);
-            expect(result[0]!.pkId).toBe('pk1');
-            expect(result[0]!.serviceProvider).toEqual(
+            await sut.initialize(person.id);
+
+            expect(sut.mergedExternalPkData).toHaveLength(1);
+            expect(sut.mergedExternalPkData![0]!.pkId).toBe('pk1');
+            expect(sut.mergedExternalPkData![0]!.serviceProvider).toEqual(
                 expect.arrayContaining([expect.objectContaining({ id: 'sp1', name: 'Provider 1' })]),
             );
         });
 
-        // This scenario should be impossible: without a context, a person cannot have any extensions.
-        it('should handle empty externalPkData', () => {
+        it('should handle empty externalPkData', async () => {
+            const person: Person<true> = createPersonMock();
             const erweitererSP: ErweiterterServiceProviderForPK = {
                 personenkontext: DoFactory.createPersonenkontext(true, { id: 'pk1' }),
                 serviceProvider: DoFactory.createServiceProvider(true, { id: 'sp1', name: 'Provider 1' }),
             };
-            const result: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
-                [],
-                [erweitererSP],
-            );
 
-            expect(result).toEqual([]);
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([erweitererSP]);
+
+            await sut.initialize(person.id);
+
+            expect(sut.mergedExternalPkData).toEqual([]);
         });
 
-        it('should merge multiple service providers for same pkId', () => {
+        it('should merge multiple service providers for same pkId', async () => {
+            const person: Person<true> = createPersonMock();
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
@@ -408,18 +435,41 @@ describe('UserExternaldataWorkflow', () => {
                 serviceProvider: DoFactory.createServiceProvider(true, { id: 'sp3', name: 'Provider 3' }),
             };
 
-            const result: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
-                externalPkData,
-                [erweitererSP1, erweitererSP2],
-            );
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([erweitererSP1, erweitererSP2]);
 
-            expect(result[0]!.serviceProvider).toHaveLength(3);
-            expect(result[0]!.serviceProvider.map((sp: ServiceProvider<true>) => sp.id)).toEqual(['sp1', 'sp2', 'sp3']);
+            await sut.initialize(person.id);
+
+            expect(sut.mergedExternalPkData![0]!.serviceProvider).toHaveLength(3);
+            expect(sut.mergedExternalPkData![0]!.serviceProvider.map((sp: ServiceProvider<true>) => sp.id)).toEqual([
+                'sp1',
+                'sp2',
+                'sp3',
+            ]);
         });
     });
 
-    describe('getExternalPkDataWithSpWithVidisAngebotId', () => {
-        it('should return pkData where at least one serviceProvider has vidisAngebotId', () => {
+    describe('externalPkDataWithVidisAngebotId', () => {
+        const createPersonMock: () => Person<true> = () =>
+            Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+            );
+
+        beforeEach(() => {
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+        });
+
+        it('should return pkData where at least one serviceProvider has vidisAngebotId', async () => {
+            const person: Person<true> = createPersonMock();
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
@@ -448,14 +498,18 @@ describe('UserExternaldataWorkflow', () => {
                 },
             ];
 
-            const result: RequiredExternalPkData[] =
-                UserExternaldataWorkflowAggregate.getExternalPkDataWithSpWithVidisAngebotId(externalPkData);
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
 
-            expect(result).toHaveLength(1);
-            expect(result[0]!.pkId).toBe('pk1');
+            await sut.initialize(person.id);
+
+            expect(sut.externalPkDataWithVidisAngebotId).toHaveLength(1);
+            expect(sut.externalPkDataWithVidisAngebotId![0]!.pkId).toBe('pk1');
         });
 
-        it('should return empty array if no serviceProvider has vidisAngebotId', () => {
+        it('should return empty array if no serviceProvider has vidisAngebotId', async () => {
+            const person: Person<true> = createPersonMock();
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
@@ -485,19 +539,29 @@ describe('UserExternaldataWorkflow', () => {
                 },
             ];
 
-            const result: RequiredExternalPkData[] =
-                UserExternaldataWorkflowAggregate.getExternalPkDataWithSpWithVidisAngebotId(externalPkData);
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
 
-            expect(result).toEqual([]);
+            await sut.initialize(person.id);
+
+            expect(sut.externalPkDataWithVidisAngebotId).toEqual([]);
         });
 
-        it('should handle empty externalPkData array', () => {
-            const result: RequiredExternalPkData[] =
-                UserExternaldataWorkflowAggregate.getExternalPkDataWithSpWithVidisAngebotId([]);
-            expect(result).toEqual([]);
+        it('should handle empty externalPkData array', async () => {
+            const person: Person<true> = createPersonMock();
+
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
+
+            await sut.initialize(person.id);
+
+            expect(sut.externalPkDataWithVidisAngebotId).toEqual([]);
         });
 
-        it('should include pkData if multiple serviceProviders and one has vidisAngebotId', () => {
+        it('should include pkData if multiple serviceProviders and one has vidisAngebotId', async () => {
+            const person: Person<true> = createPersonMock();
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
@@ -519,14 +583,18 @@ describe('UserExternaldataWorkflow', () => {
                 },
             ];
 
-            const result: RequiredExternalPkData[] =
-                UserExternaldataWorkflowAggregate.getExternalPkDataWithSpWithVidisAngebotId(externalPkData);
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
 
-            expect(result).toHaveLength(1);
-            expect(result[0]!.pkId).toBe('pk1');
+            await sut.initialize(person.id);
+
+            expect(sut.externalPkDataWithVidisAngebotId).toHaveLength(1);
+            expect(sut.externalPkDataWithVidisAngebotId![0]!.pkId).toBe('pk1');
         });
 
-        it('should ignore falsy values like empty string for vidisAngebotId', () => {
+        it('should ignore falsy values like empty string for vidisAngebotId', async () => {
+            const person: Person<true> = createPersonMock();
             const externalPkData: RequiredExternalPkData[] = [
                 {
                     pkId: 'pk1',
@@ -543,10 +611,13 @@ describe('UserExternaldataWorkflow', () => {
                 },
             ];
 
-            const result: RequiredExternalPkData[] =
-                UserExternaldataWorkflowAggregate.getExternalPkDataWithSpWithVidisAngebotId(externalPkData);
+            personRepositoryMock.findById.mockResolvedValue(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValue([]);
 
-            expect(result).toEqual([]);
+            await sut.initialize(person.id);
+
+            expect(sut.externalPkDataWithVidisAngebotId).toEqual([]);
         });
     });
 });

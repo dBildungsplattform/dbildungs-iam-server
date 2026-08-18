@@ -3,19 +3,17 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
-import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import {
     ErweiterterServiceProviderForPK,
     ExternalPkData,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternaldataWorkflowAggregate } from '../domain/user-extenaldata.workflow.js';
 import { AccessApiKeyGuard } from './access.apikey.guard.js';
-import { NewOxParams, OldOxParams, OxParams } from './externaldata/user-externaldata-ox.response.js';
+import { OxParams } from './externaldata/user-externaldata-ox.response.js';
 import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { Public } from './public.decorator.js';
 
@@ -29,6 +27,12 @@ type InitializedWorkflow = UserExternaldataWorkflowAggregate & {
     person: Person<true>;
     checkedExternalPkData: RequiredExternalPkData[];
     erweiterteSP: ErweiterterServiceProviderForPK[];
+    mergedExternalPkData: RequiredExternalPkData[];
+    externalPkDataWithVidisAngebotId: RequiredExternalPkData[];
+    vidisDienststellennummern: string[];
+    singleRollenart: RollenArt | undefined;
+    uniqDienststellenNummern: string[];
+    oxParams: OxParams | undefined;
 };
 
 @ApiTags('Keycloakinternal')
@@ -37,7 +41,6 @@ export class KeycloakInternalController {
     public constructor(
         private readonly userExternaldataWorkflowFactory: UserExternaldataWorkflowFactory,
         private readonly personRepository: PersonRepository,
-        private readonly emailResolverService: EmailResolverService,
     ) {}
 
     /**
@@ -60,62 +63,17 @@ export class KeycloakInternalController {
         const workflowInitializeError: Option<DomainError> = await workflow.initialize(person.id);
         this.checkWorkflowInitialized(workflowInitializeError, workflow);
 
-        const userExternalDataResponse: UserExternalDataResponse = UserExternalDataResponse.createNew(
-            workflow.person,
-            workflow.checkedExternalPkData,
-            workflow.erweiterteSP,
-            this.getOxParams(workflow),
-            workflow.email,
-        );
+        const userExternalDataResponse: UserExternalDataResponse = UserExternalDataResponse.createNew({
+            person: workflow.person,
+            checkedExternalPkData: workflow.checkedExternalPkData,
+            vidisDienststellennummern: workflow.vidisDienststellennummern,
+            singleRollenart: workflow.singleRollenart,
+            uniqDienststellenNummern: workflow.uniqDienststellenNummern,
+            email: workflow.email,
+            oxParams: workflow.oxParams,
+        });
 
         return userExternalDataResponse;
-    }
-
-    private getOxParams(workflow: InitializedWorkflow): OxParams | undefined {
-        let oxParams: OxParams | undefined = undefined;
-
-        if (this.emailResolverService.shouldUseEmailMicroservice()) {
-            oxParams = this.getNewOxParams(workflow);
-        } else {
-            oxParams = this.getOldOxParams(workflow);
-        }
-
-        return oxParams;
-    }
-
-    private getNewOxParams(workflow: InitializedWorkflow): NewOxParams | undefined {
-        let oxParams: NewOxParams | undefined = undefined;
-
-        if (workflow.oxLoginId) {
-            oxParams = { oxLoginId: workflow.oxLoginId };
-        }
-
-        return oxParams;
-    }
-
-    private getOldOxParams(workflow: InitializedWorkflow): OldOxParams | undefined {
-        const mergedExternalPkData: RequiredExternalPkData[] = UserExternaldataWorkflowAggregate.mergeServiceProviders(
-            workflow.checkedExternalPkData,
-            workflow.erweiterteSP,
-        );
-
-        let oxParams: OldOxParams | undefined = undefined;
-        if (this.hasEmail(mergedExternalPkData)) {
-            oxParams = {
-                contextId: workflow.contextID,
-                username: workflow.person.username!,
-            };
-        }
-
-        return oxParams;
-    }
-
-    private hasEmail(mergedExternalPkData: RequiredExternalPkData[]): boolean {
-        return mergedExternalPkData.some((pkData: RequiredExternalPkData) =>
-            pkData.serviceProvider.some(
-                (sp: ServiceProvider<true>) => sp.externalSystem === ServiceProviderSystem.EMAIL,
-            ),
-        );
     }
 
     private checkPerson(person: Option<Person<true>>, keycloakSub: string): asserts person is Person<true> {
@@ -128,7 +86,15 @@ export class KeycloakInternalController {
         error: Option<DomainError>,
         workflow: UserExternaldataWorkflowAggregate,
     ): asserts workflow is InitializedWorkflow {
-        if (error || !workflow.person || !workflow.checkedExternalPkData) {
+        if (
+            error ||
+            !workflow.person ||
+            !workflow.checkedExternalPkData ||
+            !workflow.mergedExternalPkData ||
+            !workflow.externalPkDataWithVidisAngebotId ||
+            !workflow.vidisDienststellennummern ||
+            !workflow.uniqDienststellenNummern
+        ) {
             throw new UserExternalDataWorkflowError(
                 'UserExternaldataWorkflowAggregate has not been successfully initialized',
             );
