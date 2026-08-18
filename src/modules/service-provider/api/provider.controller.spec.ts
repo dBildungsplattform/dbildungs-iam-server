@@ -46,6 +46,7 @@ import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { CreateServiceProviderResponse } from './create-service-provider.response.js';
+import { ManageableLandRootServiceProvidersQueryParams } from './manageable-land-root-service-providers-query.params.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
 import { ManageableServiceProvidersForOrganisationParams } from './manageable-service-providers-for-organisation.params.js';
@@ -1021,6 +1022,67 @@ describe('Provider Controller Test', () => {
             await expect(providerController.updateServiceProvider(permissions, angebotId, body)).rejects.toThrow(
                 MissingAttributeError,
             );
+        });
+    });
+
+    describe('getManageableLandRootServiceProviders', () => {
+        it('should return paged service providers when user has root-level permission', async () => {
+            const total: number = 3;
+            const serviceProviders: ServiceProvider<true>[] = [
+                DoFactory.createServiceProvider(true),
+                DoFactory.createServiceProvider(true),
+            ];
+            const params: ManageableLandRootServiceProvidersQueryParams = { searchStr: 'test', limit: 5, offset: 0 };
+
+            serviceProviderServiceMock.findManageableLandRoot.mockResolvedValue({
+                ok: true,
+                value: [serviceProviders, total],
+            });
+
+            const result: RawPagedResponse<ServiceProviderResponse> =
+                await providerController.getManageableLandRootServiceProviders(personPermissionsMock, params);
+
+            expect(serviceProviderServiceMock.findManageableLandRoot).toHaveBeenCalledWith(
+                personPermissionsMock,
+                'test',
+                5,
+                0,
+            );
+            expect(result.total).toBe(total);
+            expect(result.offset).toBe(0);
+            expect(result.limit).toBe(5);
+            expect(result.items).toHaveLength(2);
+            expect(result.items[0]).toBeInstanceOf(ServiceProviderResponse);
+        });
+
+        it('should use total as limit when no limit param is given', async () => {
+            const total: number = 7;
+            const serviceProviders: ServiceProvider<true>[] = [DoFactory.createServiceProvider(true)];
+            const params: ManageableLandRootServiceProvidersQueryParams = {};
+
+            serviceProviderServiceMock.findManageableLandRoot.mockResolvedValue({
+                ok: true,
+                value: [serviceProviders, total],
+            });
+
+            const result: RawPagedResponse<ServiceProviderResponse> =
+                await providerController.getManageableLandRootServiceProviders(personPermissionsMock, params);
+
+            expect(result.limit).toBe(total);
+            expect(result.offset).toBe(0);
+        });
+
+        it('should throw MissingPermissionsError when user lacks root-level permission', async () => {
+            const params: ManageableLandRootServiceProvidersQueryParams = {};
+
+            serviceProviderServiceMock.findManageableLandRoot.mockResolvedValue({
+                ok: false,
+                error: new MissingPermissionsError('Root-level ANGEBOTE_VERWALTEN required'),
+            });
+
+            await expect(
+                providerController.getManageableLandRootServiceProviders(personPermissionsMock, params),
+            ).rejects.toBeInstanceOf(MissingPermissionsError);
         });
     });
 });

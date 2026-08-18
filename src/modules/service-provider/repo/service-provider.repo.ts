@@ -334,18 +334,30 @@ export class ServiceProviderRepo {
 
     public async findBySchulstrukturknoten(
         organisationIds: Array<OrganisationID>,
-    ): Promise<Array<ServiceProvider<true>>> {
-        const exclude: readonly ['logo'] | undefined = ['logo'];
-        return (
-            await this.em.find(
-                ServiceProviderEntity,
-                { providedOnSchulstrukturknoten: { $in: organisationIds } },
-                {
-                    populate: ['merkmale', 'rollenartenWhitelist'],
-                    exclude,
-                },
-            )
-        ).map(mapEntityToAggregate);
+        searchQuery?: string,
+        limit?: number,
+        offset?: number,
+    ): Promise<Counted<ServiceProvider<true>>> {
+        const where: FilterQuery<ServiceProviderEntity> = {
+            providedOnSchulstrukturknoten: { $in: organisationIds },
+        };
+
+        if (searchQuery) {
+            where.name = { $ilike: `%${searchQuery}%` };
+        }
+
+        const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
+            ServiceProviderEntity,
+            where,
+            {
+                exclude: ['logo'] as const,
+                limit,
+                offset,
+                orderBy: { name: 'ASC' },
+            },
+        );
+
+        return [entities.map(mapEntityToAggregate), count];
     }
 
     // TODO check permissions. Currently required by db-seed. Refactor once we have permissions for seeding.

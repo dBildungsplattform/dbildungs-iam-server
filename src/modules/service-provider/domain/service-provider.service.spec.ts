@@ -9,7 +9,9 @@ import { expectErrResult, expectOkResult } from '../../../../test/utils/test-typ
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
@@ -43,6 +45,7 @@ describe('ServiceProviderService', () => {
     let rollenerweiterungRepo: DeepMocked<RollenerweiterungRepo>;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
+    let organisationService: DeepMocked<OrganisationService>;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -53,6 +56,7 @@ describe('ServiceProviderService', () => {
                 { provide: RollenerweiterungRepo, useValue: createMock(RollenerweiterungRepo) },
                 { provide: ServiceProviderRepo, useValue: createMock(ServiceProviderRepo) },
                 { provide: OrganisationRepository, useValue: createMock(OrganisationRepository) },
+                { provide: OrganisationService, useValue: createMock(OrganisationService) },
                 { provide: VidisApiAdapter, useValue: createMock(VidisApiAdapter) },
                 { provide: OrganisationServiceProviderRepo, useValue: createMock(OrganisationServiceProviderRepo) },
             ],
@@ -62,6 +66,7 @@ describe('ServiceProviderService', () => {
         rollenerweiterungRepo = module.get<DeepMocked<RollenerweiterungRepo>>(RollenerweiterungRepo);
         serviceProviderRepo = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         organisationRepo = module.get<DeepMocked<OrganisationRepository>>(OrganisationRepository);
+        organisationService = module.get<DeepMocked<OrganisationService>>(OrganisationService);
     });
 
     describe('getServiceProvidersByRolleIds', () => {
@@ -765,6 +770,41 @@ describe('ServiceProviderService', () => {
             expect(result).toHaveLength(1);
             expect(result[0]?.serviceProvider.kategorie).toBe(ServiceProviderKategorie.EMAIL);
             expect(count).toBe(1);
+        });
+    });
+
+    describe('findManageableLandRoot', () => {
+        it('should return service providers when user has all=true ANGEBOTE_VERWALTEN', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+            const orgIds: OrganisationID[] = [faker.string.uuid(), faker.string.uuid()];
+            const sps: ServiceProvider<true>[] = [DoFactory.createServiceProvider(true)];
+
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+            organisationService.findIdsByTypen.mockResolvedValueOnce(orgIds);
+            serviceProviderRepo.findBySchulstrukturknoten.mockResolvedValueOnce([sps, 1]);
+
+            const result = await service.findManageableLandRoot(permissions, undefined, 10, 0);
+
+            expect(result.ok).toBe(true);
+            if (result.ok) {
+                expect(result.value[0]).toEqual(sps);
+                expect(result.value[1]).toBe(1);
+            }
+            expect(organisationService.findIdsByTypen).toHaveBeenCalledWith([
+                OrganisationsTyp.LAND,
+                OrganisationsTyp.ROOT,
+            ]);
+        });
+
+        it('should return MissingPermissionsError when user does not have root-level ANGEBOTE_VERWALTEN', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
+
+            const result = await service.findManageableLandRoot(permissions);
+
+            expectErrResult(result);
+            expect(organisationService.findIdsByTypen).not.toHaveBeenCalled();
         });
     });
 });

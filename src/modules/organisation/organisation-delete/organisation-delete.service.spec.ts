@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { Test, TestingModule } from '@nestjs/testing';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 
 import { DoFactory } from '../../../../test/utils/index.js';
 import { DomainError } from '../../../shared/error/index.js';
@@ -77,7 +77,7 @@ describe('OrganisationDeleteService', () => {
                 .mockResolvedValueOnce([[], 0]); // zugehoerige orgs
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             personenkontextRepo.findBy.mockResolvedValue([[], 0]);
-            serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([]);
+            serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([[], 0]);
             rollenerweiterungRepo.findManyByOrganisationId.mockResolvedValue([]);
 
             const organisationId: OrganisationID = faker.string.uuid();
@@ -155,7 +155,8 @@ describe('OrganisationDeleteService', () => {
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             personenkontextRepo.findBy.mockResolvedValue([[], 0]);
             serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([
-                DoFactory.createServiceProvider(true, { providedOnSchulstrukturknoten: organisationId }),
+                [DoFactory.createServiceProvider(true, { providedOnSchulstrukturknoten: organisationId })],
+                1,
             ]);
 
             const result: void | DomainError = await organisationDeleteService.deleteOrganisation(organisationId);
@@ -169,7 +170,7 @@ describe('OrganisationDeleteService', () => {
             const organisationId: OrganisationID = faker.string.uuid();
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             personenkontextRepo.findBy.mockResolvedValue([[], 0]);
-            serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([]);
+            serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([[], 0]);
             rollenerweiterungRepo.findManyByOrganisationId.mockResolvedValue([DoFactory.createRollenerweiterung(true)]);
 
             const result: void | DomainError = await organisationDeleteService.deleteOrganisation(organisationId);

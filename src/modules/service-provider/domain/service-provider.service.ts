@@ -6,8 +6,11 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
@@ -34,6 +37,7 @@ export class ServiceProviderService {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly organisationRepo: OrganisationRepository,
+        private readonly organisationService: OrganisationService,
         configService: ConfigService<ServerConfig>,
     ) {
         const featureFlags: FeatureFlagConfig = configService.getOrThrow<FeatureFlagConfig>('FEATUREFLAG');
@@ -165,6 +169,35 @@ export class ServiceProviderService {
             await this.getRollenAndRollenerweiterungCountForServiceProviders(serviceProviders, 20, permittedOrgas);
 
         return [enrichedServiceProviders, count];
+    }
+
+    public async findManageableLandRoot(
+        permissions: IPersonPermissions,
+        searchString?: string,
+        limit?: number,
+        offset?: number,
+    ): Promise<Result<Counted<ServiceProvider<true>>, MissingPermissionsError>> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht([
+            RollenSystemRecht.ANGEBOTE_VERWALTEN,
+        ]);
+
+        if (!permittedOrgas.all) {
+            return Err(new MissingPermissionsError('Root-level ANGEBOTE_VERWALTEN required'));
+        }
+
+        const orgIds: OrganisationID[] = await this.organisationService.findIdsByTypen([
+            OrganisationsTyp.LAND,
+            OrganisationsTyp.ROOT,
+        ]);
+
+        const counted: Counted<ServiceProvider<true>> = await this.serviceProviderRepo.findBySchulstrukturknoten(
+            orgIds,
+            searchString,
+            limit,
+            offset,
+        );
+
+        return Ok(counted);
     }
 
     public async getAuthorizedForRollenErweiternWithMerkmalRollenerweiterung(

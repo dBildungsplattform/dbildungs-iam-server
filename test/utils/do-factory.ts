@@ -1,4 +1,6 @@
 import { faker } from '@faker-js/faker';
+import { EmailDomain } from '../../src/email/modules/core/domain/email-domain.js';
+import { EmailAddress, EmailAddressStatus } from '../../src/modules/email/domain/email-address.js';
 import { ImportDataItem } from '../../src/modules/import/domain/import-data-item.js';
 import { ImportVorgang } from '../../src/modules/import/domain/import-vorgang.js';
 import { ImportStatus } from '../../src/modules/import/domain/import.enums.js';
@@ -15,18 +17,17 @@ import {
 } from '../../src/modules/personenkontext/domain/personenkontext.enums.js';
 import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
 import { RollenArt } from '../../src/modules/rolle/domain/rolle.enums.js';
-import { RollenSystemRecht } from '../../src/modules/rolle/domain/systemrecht.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
+import { Rollenerweiterung } from '../../src/modules/rolle/domain/rollenerweiterung.js';
+import { RollenSystemRecht } from '../../src/modules/rolle/domain/systemrecht.js';
 import {
     ServiceProviderKategorie,
+    ServiceProviderMerkmal,
     ServiceProviderSystem,
     ServiceProviderTarget,
 } from '../../src/modules/service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
-import { Rollenerweiterung } from '../../src/modules/rolle/domain/rollenerweiterung.js';
-import { EmailAddress, EmailAddressStatus } from '../../src/modules/email/domain/email-address.js';
-import { EmailDomain } from '../../src/email/modules/core/domain/email-domain.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -166,8 +167,8 @@ export class DoFactory {
             providedOnSchulstrukturknoten: faker.string.uuid(),
             externalSystem: ServiceProviderSystem.NONE,
             requires2fa: true,
-            merkmale: [],
-            rollenartenWhitelist: [],
+            merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+            rollenartenWhitelist: [RollenArt.LEHR],
         };
         return Object.assign(
             Object.create(ServiceProvider.prototype) as ServiceProvider<boolean>,

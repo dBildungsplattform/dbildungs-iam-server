@@ -65,7 +65,7 @@ export class OrganisationDeleteService {
             return Err(new OrganisationHasPersonenkontexteError());
         }
 
-        const referencedServiceProvider: Array<ServiceProvider<true>> =
+        const [referencedServiceProvider]: Counted<ServiceProvider<true>> =
             await this.serviceProviderRepo.findBySchulstrukturknoten([organisationId]);
         if (referencedServiceProvider.length) {
             return Err(new OrganisationHasServiceProvidersError());
