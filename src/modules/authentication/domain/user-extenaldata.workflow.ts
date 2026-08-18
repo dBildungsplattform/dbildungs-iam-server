@@ -1,11 +1,17 @@
 import { ConfigService } from '@nestjs/config';
-import { uniqBy } from 'lodash-es';
+import { uniq, uniqBy } from 'lodash-es';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
+import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 import { OxServerConfig } from '../../../shared/config/ox-server.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MultipleRollenartenError } from '../../../shared/error/index.js';
+import { OXContextID } from '../../../shared/types/ox-ids.types.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import {
@@ -13,13 +19,9 @@ import {
     ErweiterterServiceProviderForPK,
     ExternalPkData,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RequiredExternalPkData } from '../api/authentication.controller.js';
-import { OXContextID } from '../../../shared/types/ox-ids.types.js';
-import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { PersonEmailResponse } from '../../person/api/person-email-response.js';
-import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { RequiredExternalPkData } from '../api/authentication.controller.js';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -154,5 +156,19 @@ export class UserExternaldataWorkflowAggregate {
         return externalPkData.filter((pk: RequiredExternalPkData): pk is RequiredExternalPkData =>
             pk.serviceProvider.some((sp: ServiceProvider<true>) => Boolean(sp.vidisAngebotId)),
         );
+    }
+
+    public static getUniqDienststellenNummern(externalPkData: RequiredExternalPkData[]): string[] {
+        return uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean));
+    }
+
+    public static getSingleRollenart(externalPkData: RequiredExternalPkData[]): RollenArt | undefined {
+        const uniqueRollenarten: RollenArt[] = uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.rollenart));
+        if (uniqueRollenarten.length > 1) {
+            throw new MultipleRollenartenError(uniqueRollenarten);
+        }
+        const rollenArt: RollenArt | undefined = uniqueRollenarten.length === 1 ? uniqueRollenarten[0] : undefined;
+
+        return rollenArt;
     }
 }

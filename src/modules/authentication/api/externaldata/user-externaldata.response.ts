@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { uniq } from 'lodash-es';
-import { MultipleRollenartenError } from '../../../../shared/error/index.js';
 import { Person } from '../../../person/domain/person.js';
 import { ErweiterterServiceProviderForPK } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
@@ -129,12 +128,13 @@ export class UserExternalDataResponse {
         const uniqueDienststellennummern: string[] = uniq(
             externalPkDataWithVidisAngebotId.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean),
         );
+        const rollenArt: RollenArt | undefined = UserExternaldataWorkflowAggregate.getSingleRollenart(externalPkData);
 
         return new UserExeternalDataResponseVidis(
             person.id,
             person.vorname,
             person.familienname,
-            externalPkData[0]?.rollenart,
+            rollenArt,
             email,
             uniqueDienststellennummern,
         );
@@ -175,23 +175,10 @@ export class UserExternalDataResponse {
     }
 
     private static createPolyteiaResponse(externalPkData: RequiredExternalPkData[]): UserExternalDataResponsePolyteia {
-        const rollenArt: RollenArt | undefined = UserExternalDataResponse.getSingleRollenart(externalPkData);
-        const dienststellenNummern: string[] = UserExternalDataResponse.getUniqDienststellenNummern(externalPkData);
+        const rollenArt: RollenArt | undefined = UserExternaldataWorkflowAggregate.getSingleRollenart(externalPkData);
+        const dienststellenNummern: string[] =
+            UserExternaldataWorkflowAggregate.getUniqDienststellenNummern(externalPkData);
 
         return new UserExternalDataResponsePolyteia(dienststellenNummern, rollenArt);
-    }
-
-    private static getUniqDienststellenNummern(externalPkData: RequiredExternalPkData[]): string[] {
-        return uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.kennung).filter(Boolean));
-    }
-
-    private static getSingleRollenart(externalPkData: RequiredExternalPkData[]): RollenArt | undefined {
-        const uniqueRollenarten: RollenArt[] = uniq(externalPkData.map((pk: RequiredExternalPkData) => pk.rollenart));
-        if (uniqueRollenarten.length > 1) {
-            throw new MultipleRollenartenError(uniqueRollenarten);
-        }
-        const rollenArt: RollenArt | undefined = uniqueRollenarten.length === 1 ? uniqueRollenarten[0] : undefined;
-
-        return rollenArt;
     }
 }
