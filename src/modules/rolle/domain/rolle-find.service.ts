@@ -203,16 +203,12 @@ export class RolleFindService {
         let allowedOrganisationIds: OrganisationID[] | undefined = filteredRequestedOrgaIds;
         let rollenartFilter: RollenArt[] | undefined;
         if (filteredRequestedOrgaIds) {
-            const [orgas, orgaIdsWithParents]: [Map<OrganisationID, Organisation<true>>, OrganisationID[]] =
-                await Promise.all([
-                    this.organisationRepository.findByIds(filteredRequestedOrgaIds),
-                    this.getOrganisationIdsWithParents(filteredRequestedOrgaIds),
-                ]);
+            const [orgaTypes, orgaIdsWithParents]: [OrganisationsTyp[], OrganisationID[]] = await Promise.all([
+                this.organisationRepository.findDistinctOrganisationsTypen(filteredRequestedOrgaIds),
+                this.getOrganisationIdsWithParents(filteredRequestedOrgaIds),
+            ]);
 
             // Get organisations to create rollenart filter
-            const orgaTypes: OrganisationsTyp[] = Array.from(orgas.values())
-                .map((o: Organisation<true>) => o.typ)
-                .filter(Boolean);
             rollenartFilter = Array.from(
                 OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationTypes(orgaTypes),
             );

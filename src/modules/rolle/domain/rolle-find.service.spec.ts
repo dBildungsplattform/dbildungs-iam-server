@@ -539,11 +539,7 @@ describe('RolleService', () => {
                 all: false,
                 orgaIds: ['orga-1'],
             });
-            organisationRepoMock.findByIds.mockResolvedValueOnce(
-                new Map([
-                    ['orga-1', DoFactory.createOrganisation(true, { id: 'orga-1', typ: OrganisationsTyp.SCHULE })],
-                ]),
-            );
+            organisationRepoMock.findDistinctOrganisationsTypen.mockResolvedValueOnce([OrganisationsTyp.SCHULE]);
             organisationRepoMock.findParentOrgasForIds.mockResolvedValueOnce([
                 DoFactory.createOrganisation(true, { id: 'parent-1' }),
             ]);
@@ -587,11 +583,7 @@ describe('RolleService', () => {
                 all: false,
                 orgaIds: ['orga-1'],
             });
-            organisationRepoMock.findByIds.mockResolvedValueOnce(
-                new Map([
-                    ['orga-1', DoFactory.createOrganisation(true, { id: 'orga-1', typ: OrganisationsTyp.SCHULE })],
-                ]),
-            );
+            organisationRepoMock.findDistinctOrganisationsTypen.mockResolvedValueOnce([OrganisationsTyp.SCHULE]);
             organisationRepoMock.findParentOrgasForIds.mockResolvedValueOnce([
                 DoFactory.createOrganisation(true, { id: 'parent-1' }),
             ]);
@@ -635,11 +627,7 @@ describe('RolleService', () => {
                 all: false,
                 orgaIds: ['orga-1', 'orga-2'],
             });
-            organisationRepoMock.findByIds.mockResolvedValueOnce(
-                new Map([
-                    ['orga-2', DoFactory.createOrganisation(true, { id: 'orga-2', typ: OrganisationsTyp.SCHULE })],
-                ]),
-            );
+            organisationRepoMock.findDistinctOrganisationsTypen.mockResolvedValueOnce([OrganisationsTyp.SCHULE]);
             organisationRepoMock.findParentOrgasForIds.mockResolvedValueOnce([
                 DoFactory.createOrganisation(true, { id: 'parent-2' }),
             ]);
