@@ -190,7 +190,7 @@ export class RolleFindService {
 
         // Narrow the requested organisation IDs using the allowed organisations
         let filteredRequestedOrgaIds: OrganisationID[] | undefined;
-        if (organisationIds) {
+        if (organisationIds && organisationIds.length > 0) {
             filteredRequestedOrgaIds = intersectPermittedAndRequestedOrgas(orgIdsWithRecht, organisationIds);
         } else if (!orgIdsWithRecht.all) {
             filteredRequestedOrgaIds = orgIdsWithRecht.orgaIds;
@@ -201,12 +201,24 @@ export class RolleFindService {
         }
 
         let allowedOrganisationIds: OrganisationID[] | undefined = filteredRequestedOrgaIds;
+        let rollenartFilter: RollenArt[] | undefined;
         if (filteredRequestedOrgaIds) {
-            // Add parent orgas to the requested IDs
-            const parentOrgas: Organisation<true>[] =
-                await this.organisationRepository.findParentOrgasForIds(filteredRequestedOrgaIds);
+            const [orgas, orgaIdsWithParents]: [Map<OrganisationID, Organisation<true>>, OrganisationID[]] =
+                await Promise.all([
+                    this.organisationRepository.findByIds(filteredRequestedOrgaIds),
+                    this.getOrganisationIdsWithParents(filteredRequestedOrgaIds),
+                ]);
 
-            allowedOrganisationIds = filteredRequestedOrgaIds.concat(parentOrgas.map((o: Organisation<true>) => o.id));
+            // Get organisations to create rollenart filter
+            const orgaTypes: OrganisationsTyp[] = Array.from(orgas.values())
+                .map((o: Organisation<true>) => o.typ)
+                .filter(Boolean);
+            rollenartFilter = Array.from(
+                OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationTypes(orgaTypes),
+            );
+
+            // Set allowed orgas
+            allowedOrganisationIds = orgaIdsWithParents;
         }
 
         return this.rolleRepo.findBy({
@@ -218,6 +230,7 @@ export class RolleFindService {
             rolleIds,
             requireMerkmale: [RollenMerkmal.MPT_ROLLE],
             orderByRollenArtAndName: true,
+            rollenArten: rollenartFilter,
         });
     }
 
