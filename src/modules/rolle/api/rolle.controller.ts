@@ -116,7 +116,7 @@ export class RolleController {
                 offset: queryParams.offset,
             });
         } else if (systemrechteSet.size === 1 && systemrechteSet.has(RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN)) {
-            rollenAndTotal = await this.rolleFindService.findMptRollenAuthorized(
+            rollenAndTotal = await this.rolleRepo.findMptRollenAuthorized(
                 permissions,
                 false,
                 queryParams.searchStr,
