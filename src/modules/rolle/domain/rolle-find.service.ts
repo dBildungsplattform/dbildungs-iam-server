@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { intersection } from 'lodash-es';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -172,6 +172,53 @@ export class RolleFindService {
         }
 
         return [allowedRollen, total];
+    }
+
+    public async findMptRollenAuthorized(
+        permissions: IPersonPermissions,
+        includeTechnische: boolean,
+        searchStr?: string,
+        limit?: number,
+        offset?: number,
+        organisationIds?: OrganisationID[],
+        rolleIds?: RolleID[],
+    ): Promise<Counted<Rolle<true>>> {
+        const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.MPT_ROLLEN_VERWALTEN],
+            true,
+        );
+
+        // Narrow the requested organisation IDs using the allowed organisations
+        let filteredRequestedOrgaIds: OrganisationID[] | undefined;
+        if (organisationIds) {
+            filteredRequestedOrgaIds = intersectPermittedAndRequestedOrgas(orgIdsWithRecht, organisationIds);
+        } else if (!orgIdsWithRecht.all) {
+            filteredRequestedOrgaIds = orgIdsWithRecht.orgaIds;
+        }
+
+        if (filteredRequestedOrgaIds && filteredRequestedOrgaIds.length === 0) {
+            return [[], 0];
+        }
+
+        let allowedOrganisationIds: OrganisationID[] | undefined = filteredRequestedOrgaIds;
+        if (filteredRequestedOrgaIds) {
+            // Add parent orgas to the requested IDs
+            const parentOrgas: Organisation<true>[] =
+                await this.organisationRepository.findParentOrgasForIds(filteredRequestedOrgaIds);
+
+            allowedOrganisationIds = filteredRequestedOrgaIds.concat(parentOrgas.map((o: Organisation<true>) => o.id));
+        }
+
+        return this.rolleRepo.findBy({
+            includeTechnische,
+            searchStr,
+            limit,
+            offset,
+            allowedOrganisationIds,
+            rolleIds,
+            requireMerkmale: [RollenMerkmal.MPT_ROLLE],
+            orderByRollenArtAndName: true,
+        });
     }
 
     private async getOrganisationIdsWithParents(organisationIds: OrganisationID[]): Promise<OrganisationID[]> {
