@@ -247,7 +247,8 @@ export class ServiceProviderRepo {
         }
 
         if (filter?.searchFilter) {
-            where.name = { $ilike: `%${filter.searchFilter}%` };
+            const escapedSearchFilter: string = filter.searchFilter.replace(/[\\%_]/g, '\\$&');
+            where.name = { $ilike: `%${escapedSearchFilter}%` };
         }
 
         const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
