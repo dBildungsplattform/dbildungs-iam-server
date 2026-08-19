@@ -5,7 +5,7 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/response/email-address.response.js';
 import { EmailAddress } from '../../../email/modules/core/domain/email-address.js';
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, MultipleRollenartenError } from '../../../shared/error/index.js';
 import { Err, Ok } from '../../../shared/util/result.js';
 import { EmailResolverService } from '../../email-microservice/domain/email-resolver.service.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
@@ -17,11 +17,23 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import {
     DBiamPersonenkontextRepo,
     ErweiterterServiceProviderForPK,
+    ExternalPkData,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RequiredExternalPkData } from '../api/keycloakinternal.controller.js';
 import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
+
+const createRequiredExternalPkData = (props?: Partial<RequiredExternalPkData>): RequiredExternalPkData => {
+    return {
+        pkId: props?.pkId ?? faker.string.uuid(),
+        rolleId: props?.rolleId ?? faker.string.uuid(),
+        rollenart: props?.rollenart ?? RollenArt.LEHR,
+        kennung: props?.kennung ?? faker.string.alpha(),
+        serviceProvider: props?.serviceProvider ?? [],
+    };
+};
 
 describe('UserExternaldataWorkflow', () => {
     let sut: UserExternaldataWorkflowAggregate;
@@ -541,6 +553,146 @@ describe('UserExternaldataWorkflow', () => {
             await sut.initialize(person.id);
 
             expect(sut.externalPkDataWithVidisAngebotId).toEqual([]);
+        });
+    });
+
+    describe('oxParams', () => {
+        it('should return oxParams with oxLoginId when using email microservice', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            const oxLoginId: string = faker.string.uuid();
+            const oxContextId: string = 'test-context-id';
+
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+
+            const emailAddress: EmailAddress<true> = DoFactory.createMicroserviceEmailAddress(true, {
+                spshPersonId: person.id,
+                externalId: oxLoginId,
+                sortedStatuses: [{ status: EmailAddressStatusEnum.ACTIVE }],
+            });
+            const response: EmailAddressResponse = new EmailAddressResponse(
+                emailAddress,
+                emailAddress.getStatus()!,
+                oxContextId,
+            );
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValueOnce(Ok(response));
+
+            await sut.initialize(person.id);
+
+            expect(sut.oxParams).toEqual({ oxLoginId: `${oxLoginId}@${oxContextId}` });
+        });
+
+        it('should return oxParams with contextId and username when using old email system with EMAIL service provider', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            const externalPkData: RequiredExternalPkData[] = [
+                createRequiredExternalPkData({
+                    serviceProvider: [
+                        DoFactory.createServiceProvider(true, {
+                            externalSystem: ServiceProviderSystem.EMAIL,
+                        }),
+                    ],
+                }),
+            ];
+
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
+            await sut.initialize(person.id);
+
+            expect(sut.oxParams).toEqual({
+                contextId: sut.contextID,
+                username: person.username,
+            });
+        });
+
+        it('should return undefined oxParams when using old email system without EMAIL service provider', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            const externalPkData: RequiredExternalPkData[] = [
+                createRequiredExternalPkData({
+                    serviceProvider: [
+                        DoFactory.createServiceProvider(true, {
+                            externalSystem: ServiceProviderSystem.NONE,
+                        }),
+                    ],
+                }),
+            ];
+
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
+            await sut.initialize(person.id);
+
+            expect(sut.oxParams).toBeUndefined();
+        });
+
+        it('should return undefined oxParams when using email microservice but no email exists', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(true);
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValueOnce(Ok(undefined));
+
+            await sut.initialize(person.id);
+
+            expect(sut.oxParams).toBeUndefined();
+        });
+    });
+
+    describe('multipleRollenarten', () => {
+        it('should return MultipleRollenartenError when person has multiple different rollenarten', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            const externalPkData: RequiredExternalPkData[] = [
+                createRequiredExternalPkData({ rollenart: RollenArt.LEHR }),
+                createRequiredExternalPkData({ rollenart: RollenArt.LERN }),
+            ];
+
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
+            const result: Option<DomainError> = await sut.initialize(person.id);
+
+            expect(result).toBeInstanceOf(MultipleRollenartenError);
+        });
+    });
+
+    describe('checkedExternalPkData filtering', () => {
+        it('should filter out invalid ExternalPkData entries with missing kennung', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            const invalidExternalPkData: ExternalPkData[] = [
+                {
+                    pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
+                    kennung: undefined, // missing kennung
+                    serviceProvider: [],
+                },
+                {
+                    pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
+                    kennung: faker.string.alpha(), // valid entry
+                    serviceProvider: [],
+                },
+            ];
+
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(invalidExternalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
+            await sut.initialize(person.id);
+
+            expect(sut.checkedExternalPkData).toHaveLength(1);
         });
     });
 });
