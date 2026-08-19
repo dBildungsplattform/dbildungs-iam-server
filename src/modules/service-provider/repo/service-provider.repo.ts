@@ -427,16 +427,6 @@ export class ServiceProviderRepo {
         return Ok();
     }
 
-    public async deleteById(id: string): Promise<boolean> {
-        const deletedServiceProviders: number = await this.em.nativeDelete(ServiceProviderEntity, { id });
-        return deletedServiceProviders > 0;
-    }
-
-    public async deleteByName(name: string): Promise<boolean> {
-        const deletedServiceProviders: number = await this.em.nativeDelete(ServiceProviderEntity, { name: name });
-        return deletedServiceProviders > 0;
-    }
-
     public async getPermissionsForServiceProvider(
         permissions: IPersonPermissions,
         serviceProvider: ServiceProvider<boolean>,

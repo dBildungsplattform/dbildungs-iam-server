@@ -802,26 +802,6 @@ describe('ServiceProviderRepo', () => {
         });
     });
 
-    describe('deleteById', () => {
-        it('should delete an existing ServiceProvider by its id', async () => {
-            const persistedPersistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
-
-            const result: boolean = await sut.deleteById(persistedPersistedServiceProvider.id);
-
-            expect(result).toBeTruthy();
-        });
-    });
-
-    describe('deleteByName', () => {
-        it('should delete an existing ServiceProvider by its name', async () => {
-            const persistedPersistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
-
-            const result: boolean = await sut.deleteByName(persistedPersistedServiceProvider.name);
-
-            expect(result).toBeTruthy();
-        });
-    });
-
     describe('getPermissionsForServiceProvider', () => {
         it.each([
             [RollenSystemRecht.ANGEBOTE_VERWALTEN, ServiceProviderPropertyPermissions.ALL],
