@@ -1,9 +1,9 @@
-import { vi } from 'vitest';
 import { faker } from '@faker-js/faker';
-import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { vi } from 'vitest';
+import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import {
     ConfigTestModule,
     createPersonPermissionsMock,
@@ -18,6 +18,7 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/index.js';
 import { OrganisationID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -31,7 +32,6 @@ import { TraegerUnterRootChildError } from '../specification/error/traeger-unter
 import { OrganisationEntity } from './organisation.entity.js';
 import { mapOrgaAggregateToData, mapOrgaEntityToAggregate, OrganisationRepository } from './organisation.repository.js';
 import { OrganisationScope } from './organisation.scope.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -63,7 +63,6 @@ describe('OrganisationRepository', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
-        await orm.close();
         await module.close();
     });
 
