@@ -84,6 +84,8 @@ export class DatabaseTestModule implements OnModuleDestroy {
         if (this.orm?.isConnected()) {
             await this.orm.close();
         }
-        await DatabaseTestModule.postgres?.stop();
+        // Container cleanup is handled by testcontainers when the process exits
+        // Stopping here causes race conditions when multiple tests share the static container
+        // await DatabaseTestModule.postgres?.stop();
     }
 }
