@@ -1932,7 +1932,7 @@ describe('Rolle API', () => {
             expect(response.status).toBe(404);
         });
 
-        it('should return 500 if applying rollenerweiterung changes fails', async () => {
+        it('should return 400 if applying rollenerweiterung changes fails', async () => {
             const serviceProviderId: string = faker.string.uuid();
             const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),

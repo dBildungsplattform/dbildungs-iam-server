@@ -18,6 +18,7 @@ import { IPersonPermissions } from '../../../shared/permissions/person-permissio
 import { ApplyRollenerweiterungChangesBodyParams } from '../api/apply-rollenerweiterung-changes.body.params.js';
 import { ApplyRollenerweiterungError } from '../api/apply-rollenerweiterung.error.js';
 import { ErrorIdType } from '../api/ErrorIdType.enum.js';
+import { RollenMerkmal } from './rolle.enums.js';
 
 type TunknownResultForRolle = {
     serviceProviderId: string;
@@ -57,6 +58,10 @@ export class ApplyRollenerweiterungForRolleService {
         if (!(await permissions.hasSystemrechtAtOrganisation(orgaId, RollenSystemRecht.ROLLEN_ERWEITERN))) {
             return Err(new MissingPermissionsError('Not authorized'));
         }
+        const hasSystemrechtAtOrganisationMpt: boolean = await permissions.hasSystemrechtAtOrganisation(
+            orgaId,
+            RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
+        );
 
         const organisation: Option<Organisation<true>> = await this.organisationRepo.findById(orgaId);
         if (!organisation) {
@@ -74,6 +79,9 @@ export class ApplyRollenerweiterungForRolleService {
                 `applyRollenerweiterungChangesForRolle called by ${permissions.personFields.username} - ${permissions.personFields.id} for not existing rolle ${rolleId}`,
             );
             return Err(new EntityNotFoundError('Rolle', rolleId));
+        }
+        if (rolle.merkmale.includes(RollenMerkmal.MPT_ROLLE) && !hasSystemrechtAtOrganisationMpt) {
+            return Err(new MissingPermissionsError('Not authorized'));
         }
 
         const existingErweiterungen: Rollenerweiterung<true>[] =

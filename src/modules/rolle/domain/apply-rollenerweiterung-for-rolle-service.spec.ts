@@ -21,6 +21,7 @@ import {
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ApplyRollenerweiterungChangesBodyParams } from '../api/apply-rollenerweiterung-changes.body.params.js';
+import { RollenMerkmal } from './rolle.enums.js';
 import { ApplyRollenerweiterungForRolleService } from './apply-rollenerweiterungen-for-rolle-service.js';
 import { ApplyRollenerweiterungError } from '../api/apply-rollenerweiterung.error.js';
 
@@ -83,7 +84,10 @@ describe('ApplyRollenerweiterungForRolleService', () => {
 
             organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
 
-            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle);
+            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+                id: rolleId,
+                merkmale: [],
+            });
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
 
             const existingErw: Rollenerweiterung<true> = createMock<Rollenerweiterung<true>>(Rollenerweiterung, {
@@ -231,7 +235,10 @@ describe('ApplyRollenerweiterungForRolleService', () => {
 
             organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
 
-            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle);
+            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+                id: rolleId,
+                merkmale: [],
+            });
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
 
             rollenerweiterungRepo.findManyByOrganisationAndRolle.mockResolvedValue([]);
@@ -274,7 +281,10 @@ describe('ApplyRollenerweiterungForRolleService', () => {
 
             organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
 
-            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle);
+            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+                id: rolleId,
+                merkmale: [],
+            });
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
 
             const existingErw: Rollenerweiterung<true> = createMock<Rollenerweiterung<true>>(Rollenerweiterung, {
@@ -321,7 +331,10 @@ describe('ApplyRollenerweiterungForRolleService', () => {
 
             organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
 
-            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle);
+            const rolle: Rolle<true> = createMock<Rolle<true>>(Rolle, {
+                id: rolleId,
+                merkmale: [],
+            });
             rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
 
             rollenerweiterungRepo.findManyByOrganisationAndRolle.mockResolvedValue([]);
@@ -361,6 +374,39 @@ describe('ApplyRollenerweiterungForRolleService', () => {
 
             expect(err.errors[0]?.id).toBe(serviceProviderId);
             expect(err.errors[0]?.error).toBeInstanceOf(MissingMerkmalVerfuegbarFuerRollenerweiterungError);
+        });
+
+        it('should return error if mpt rolle and user has no permission', async () => {
+            const orgaId: string = faker.string.uuid();
+            const rolleId: string = faker.string.uuid();
+
+            organisationRepo.findById.mockResolvedValue(DoFactory.createOrganisation(true, { id: orgaId }));
+
+            const rolle: Rolle<true> = DoFactory.createRolle(true, {
+                merkmale: [RollenMerkmal.MPT_ROLLE],
+            });
+            rolleRepo.findByIds.mockResolvedValue(new Map([[rolleId, rolle]]));
+
+            const body: ApplyRollenerweiterungChangesBodyParams = {
+                addErweiterungenForServiceProviderIds: [],
+                removeErweiterungenForServiceProviderIds: [],
+            };
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+            const result: TresultType = await service.applyRollenerweiterungChangesForRolle(
+                orgaId,
+                rolleId,
+                body,
+                permissions,
+            );
+
+            expect(result.ok).toBe(false);
+            if (result.ok) {
+                return;
+            }
+            expect(result.error).toBeInstanceOf(MissingPermissionsError);
         });
     });
 });
