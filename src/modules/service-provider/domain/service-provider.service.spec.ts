@@ -11,7 +11,6 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
@@ -45,7 +44,6 @@ describe('ServiceProviderService', () => {
     let rollenerweiterungRepo: DeepMocked<RollenerweiterungRepo>;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
-    let organisationService: DeepMocked<OrganisationService>;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -56,7 +54,6 @@ describe('ServiceProviderService', () => {
                 { provide: RollenerweiterungRepo, useValue: createMock(RollenerweiterungRepo) },
                 { provide: ServiceProviderRepo, useValue: createMock(ServiceProviderRepo) },
                 { provide: OrganisationRepository, useValue: createMock(OrganisationRepository) },
-                { provide: OrganisationService, useValue: createMock(OrganisationService) },
                 { provide: VidisApiAdapter, useValue: createMock(VidisApiAdapter) },
                 { provide: OrganisationServiceProviderRepo, useValue: createMock(OrganisationServiceProviderRepo) },
             ],
@@ -66,7 +63,6 @@ describe('ServiceProviderService', () => {
         rollenerweiterungRepo = module.get<DeepMocked<RollenerweiterungRepo>>(RollenerweiterungRepo);
         serviceProviderRepo = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         organisationRepo = module.get<DeepMocked<OrganisationRepository>>(OrganisationRepository);
-        organisationService = module.get<DeepMocked<OrganisationService>>(OrganisationService);
     });
 
     describe('getServiceProvidersByRolleIds', () => {
@@ -780,7 +776,7 @@ describe('ServiceProviderService', () => {
             const sps: ServiceProvider<true>[] = [DoFactory.createServiceProvider(true)];
 
             permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
-            organisationService.findIdsByTypen.mockResolvedValueOnce(orgIds);
+            organisationRepo.findIdsByTypen.mockResolvedValueOnce(orgIds);
             serviceProviderRepo.findBySchulstrukturknoten.mockResolvedValueOnce([sps, 1]);
 
             const result = await service.findManageableLandRoot(permissions, undefined, 10, 0);
@@ -790,7 +786,7 @@ describe('ServiceProviderService', () => {
                 expect(result.value[0]).toEqual(sps);
                 expect(result.value[1]).toBe(1);
             }
-            expect(organisationService.findIdsByTypen).toHaveBeenCalledWith([
+            expect(organisationRepo.findIdsByTypen).toHaveBeenCalledWith([
                 OrganisationsTyp.LAND,
                 OrganisationsTyp.ROOT,
             ]);
@@ -804,7 +800,7 @@ describe('ServiceProviderService', () => {
             const result = await service.findManageableLandRoot(permissions);
 
             expectErrResult(result);
-            expect(organisationService.findIdsByTypen).not.toHaveBeenCalled();
+            expect(organisationRepo.findIdsByTypen).not.toHaveBeenCalled();
         });
     });
 });

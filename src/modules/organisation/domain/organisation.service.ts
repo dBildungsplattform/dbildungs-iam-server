@@ -595,10 +595,6 @@ export class OrganisationService {
         }
     }
 
-    public async findIdsByTypen(typen: OrganisationsTyp[]): Promise<OrganisationID[]> {
-        return this.organisationRepo.findIdsByTypen(typen);
-    }
-
     private findSystemRechtForOrganisationsTyp(typ?: OrganisationsTyp): Option<RollenSystemRecht> {
         switch (typ) {
             case OrganisationsTyp.TRAEGER:

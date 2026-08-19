@@ -10,7 +10,6 @@ import { Err, Ok } from '../../../shared/util/result.js';
 import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
@@ -37,7 +36,6 @@ export class ServiceProviderService {
         private readonly rollenerweiterungRepo: RollenerweiterungRepo,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly organisationRepo: OrganisationRepository,
-        private readonly organisationService: OrganisationService,
         configService: ConfigService<ServerConfig>,
     ) {
         const featureFlags: FeatureFlagConfig = configService.getOrThrow<FeatureFlagConfig>('FEATUREFLAG');
@@ -185,7 +183,7 @@ export class ServiceProviderService {
             return Err(new MissingPermissionsError('Root-level ANGEBOTE_VERWALTEN required'));
         }
 
-        const orgIds: OrganisationID[] = await this.organisationService.findIdsByTypen([
+        const orgIds: OrganisationID[] = await this.organisationRepo.findIdsByTypen([
             OrganisationsTyp.LAND,
             OrganisationsTyp.ROOT,
         ]);
