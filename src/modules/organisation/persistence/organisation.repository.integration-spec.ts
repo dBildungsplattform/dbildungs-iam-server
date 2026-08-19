@@ -2478,7 +2478,11 @@ describe('OrganisationRepository', () => {
         });
 
         describe('when types are provided', () => {
-            const setup = async () => {
+            const setup = async (): Promise<{
+                schule: OrganisationEntity;
+                traeger: OrganisationEntity;
+                klasse: OrganisationEntity;
+            }> => {
                 const schule: OrganisationEntity = Object.assign(
                     new OrganisationEntity(),
                     DoFactory.createOrganisation<true>(true, { typ: OrganisationsTyp.SCHULE }),
@@ -2492,6 +2496,7 @@ describe('OrganisationRepository', () => {
                     DoFactory.createOrganisation<true>(true, { typ: OrganisationsTyp.KLASSE }),
                 );
                 await em.persist([schule, traeger, klasse]).flush();
+                em.clear();
 
                 return { schule, traeger, klasse };
             };
