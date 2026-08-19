@@ -48,15 +48,6 @@ export class FindDbiamPersonenkontextWorkflowBodyParams {
     @IsString()
     @IsOptional()
     @ApiProperty({
-        description: 'Rolle name used to filter for rollen in personenkontext.',
-        required: false,
-        nullable: true,
-    })
-    public readonly rolleName?: string;
-
-    @IsString()
-    @IsOptional()
-    @ApiProperty({
         description: 'Organisation/SSK name used to filter for schulstrukturknoten in personenkontext.',
         required: false,
         nullable: true,

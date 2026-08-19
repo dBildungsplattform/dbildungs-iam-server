@@ -544,7 +544,9 @@ export class RolleController {
         const rollenAndTotal: [Rolle<true>[], number] =
             await this.rolleFindService.findRollenAvailableForPersonenkontextCreation({
                 permissions,
-                systemrecht: queryParams.systemrecht,
+                systemrecht: queryParams.systemrecht
+                    ? RollenSystemRecht.getByName(queryParams.systemrecht)
+                    : RollenSystemRecht.getByName(RollenSystemRechtEnum.PERSONEN_VERWALTEN),
                 organisationId: queryParams.organisationId,
                 rollenartOfUser: queryParams.rollenartOfUser,
                 rolleName: queryParams.rolleName,

@@ -2,17 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { RollenArt } from '../domain/rolle.enums.js';
-import { RollenSystemRecht } from '../domain/systemrecht.js';
-import { IsUUID } from 'class-validator';
+import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
+import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class FindAvailableRollenForPKCreationQueryParams extends PagedQueryParams {
-    @ApiProperty({
-        description: 'The systemrecht for which the available rollen should be found',
-        required: true,
-        nullable: false,
-    })
-    public readonly systemrecht!: RollenSystemRecht;
-
     @IsUUID()
     @ApiProperty({
         description: 'The organisationId for which the available rollen should be found',
@@ -21,6 +14,7 @@ export class FindAvailableRollenForPKCreationQueryParams extends PagedQueryParam
     })
     public readonly organisationId!: OrganisationID;
 
+    @IsOptional()
     @ApiProperty({
         description: 'The rollenart of the user for which the available rollen should be found',
         required: false,
@@ -28,6 +22,8 @@ export class FindAvailableRollenForPKCreationQueryParams extends PagedQueryParam
     })
     public readonly rollenartOfUser?: RollenArt;
 
+    @IsString()
+    @IsOptional()
     @ApiProperty({
         description: 'The rolleName for which the available rollen should be found',
         required: false,
@@ -35,6 +31,9 @@ export class FindAvailableRollenForPKCreationQueryParams extends PagedQueryParam
     })
     public readonly rolleName?: string;
 
+    @ArrayUnique()
+    @IsUUID(undefined, { each: true })
+    @IsOptional()
     @ApiProperty({
         description: 'The rollenIds for which the available rollen should be found',
         required: false,
@@ -42,4 +41,15 @@ export class FindAvailableRollenForPKCreationQueryParams extends PagedQueryParam
         type: [String],
     })
     public readonly rollenIds?: Array<RolleID>;
+
+    @IsEnum(RollenSystemRechtEnum)
+    @IsOptional()
+    @ApiProperty({
+        enum: RollenSystemRechtEnum,
+        enumName: RollenSystemRechtEnumName,
+        description: 'The systemrecht for which the available rollen should be found',
+        required: false,
+        nullable: true,
+    })
+    public readonly systemrecht?: RollenSystemRechtEnum;
 }
