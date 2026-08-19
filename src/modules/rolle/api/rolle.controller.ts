@@ -60,8 +60,8 @@ import { FindRolleForPersonAdministrationQueryParams } from './find-rolle-for-pe
 import { FindRolleQueryParams } from './find-rolle-query.param.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
-import { RolleResponse } from './rolle.response.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
+import { RolleResponse } from './rolle.response.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
@@ -102,14 +102,18 @@ export class RolleController {
         const systemrechteSet: Set<RollenSystemRechtEnum> = new Set(queryParams.systemrechte ?? []);
 
         if (systemrechteSet.size === 1 && systemrechteSet.has(RollenSystemRechtEnum.IMPORT_DURCHFUEHREN)) {
-            rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
-                permissions,
-                searchStr: queryParams.searchStr,
-                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
-                rollenArten: queryParams.rollenarten,
-                limit: queryParams.limit,
-                offset: queryParams.offset,
-            });
+            if (!queryParams.organisationId) {
+                rollenAndTotal = [[], 0];
+            } else {
+                rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
+                    permissions,
+                    searchStr: queryParams.searchStr,
+                    organisationId: queryParams.organisationId,
+                    rollenArten: queryParams.rollenarten,
+                    limit: queryParams.limit,
+                    offset: queryParams.offset,
+                });
+            }
         } else if (systemrechteSet.size === 1 && systemrechteSet.has(RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN)) {
             rollenAndTotal = await this.rolleRepo.findMptRollenAuthorized(
                 permissions,

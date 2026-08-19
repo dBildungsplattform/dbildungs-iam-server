@@ -76,10 +76,15 @@ export function envToStringArray(key: string): string[] | undefined {
  * Filters out any strings that are not valid RollenArt values.
  *
  * @param rollenarten Array of strings representing RollenArt
- * @returns Array of RollenArt enums or undefined if no valid RollenArt found
+ * @returns Array of RollenArt enums, empty if none are valid
  */
-export function mapStringsToRollenArt(rollenarten: string[]): RollenArt[] | undefined {
-    return rollenarten
-        .filter((rollenart: string) => Object.values(RollenArt).includes(rollenart as RollenArt))
-        .map((rollenart: string) => rollenart as RollenArt);
+export function mapStringsToRollenArt(rollenarten: string[]): RollenArt[] {
+    const rollenartenSet: Set<RollenArt> = new Set(Object.values(RollenArt));
+    const validatedRollenarten: Set<RollenArt> = new Set();
+    for (const unvalidated of rollenarten) {
+        if (rollenartenSet.has(unvalidated as RollenArt)) {
+            validatedRollenarten.add(unvalidated as RollenArt);
+        }
+    }
+    return Array.from(validatedRollenarten);
 }
