@@ -246,6 +246,10 @@ export class ServiceProviderRepo {
             where.kategorie = { $in: filter.kategorien };
         }
 
+        if (filter?.searchFilter) {
+            where.name = { $ilike: `%${filter.searchFilter}%` };
+        }
+
         const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
             ServiceProviderEntity,
             where,
