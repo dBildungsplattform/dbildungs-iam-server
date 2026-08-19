@@ -739,11 +739,14 @@ export class OrganisationRepository {
         if (typen.length === 0) {
             return [];
         }
+
         const entities: Loaded<OrganisationEntity, never, 'id', never>[] = await this.em.find(
             OrganisationEntity,
             { typ: { $in: typen } },
             { fields: ['id'] as const },
         );
-        return entities.map((e: Loaded<OrganisationEntity, never, 'id', never>) => e.id);
+        const ids: OrganisationID[] = entities.map((e: Loaded<OrganisationEntity, never, 'id', never>) => e.id);
+
+        return ids;
     }
 }
