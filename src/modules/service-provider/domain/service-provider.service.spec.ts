@@ -770,37 +770,94 @@ describe('ServiceProviderService', () => {
     });
 
     describe('findManageableLandRoot', () => {
-        it('should return service providers when user has all=true ANGEBOTE_VERWALTEN', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
-            const orgIds: OrganisationID[] = [faker.string.uuid(), faker.string.uuid()];
-            const sps: ServiceProvider<true>[] = [DoFactory.createServiceProvider(true)];
+        describe('when user has all=true ANGEBOTE_VERWALTEN', () => {
+            it('should return service providers', async () => {
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+                const orgIds: OrganisationID[] = [faker.string.uuid(), faker.string.uuid()];
+                const sps: ServiceProvider<true>[] = [DoFactory.createServiceProvider(true)];
 
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
-            organisationRepo.findIdsByTypen.mockResolvedValueOnce(orgIds);
-            serviceProviderRepo.findBySchulstrukturknoten.mockResolvedValueOnce([sps, 1]);
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+                organisationRepo.findIdsByTypen.mockResolvedValueOnce(orgIds);
+                serviceProviderRepo.findBySchulstrukturknoten.mockResolvedValueOnce([sps, 1]);
 
-            const result = await service.findManageableLandRoot(permissions, undefined, 10, 0);
+                const result: Result<
+                    Counted<ServiceProvider<true>>,
+                    MissingPermissionsError
+                > = await service.findManageableLandRoot(permissions, undefined, 10, 0);
 
-            expect(result.ok).toBe(true);
-            if (result.ok) {
-                expect(result.value[0]).toEqual(sps);
-                expect(result.value[1]).toBe(1);
-            }
-            expect(organisationRepo.findIdsByTypen).toHaveBeenCalledWith([
-                OrganisationsTyp.LAND,
-                OrganisationsTyp.ROOT,
-            ]);
+                expect(result.ok).toBe(true);
+                if (result.ok) {
+                    expect(result.value[0]).toEqual(sps);
+                    expect(result.value[1]).toBe(1);
+                }
+                expect(organisationRepo.findIdsByTypen).toHaveBeenCalledWith([
+                    OrganisationsTyp.LAND,
+                    OrganisationsTyp.ROOT,
+                ]);
+                expect(serviceProviderRepo.findBySchulstrukturknoten).toHaveBeenCalledWith(orgIds, undefined, 10, 0);
+            });
+
+            it('should forward searchString, limit and offset to findBySchulstrukturknoten', async () => {
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+                const orgIds: OrganisationID[] = [faker.string.uuid()];
+                const sps: ServiceProvider<true>[] = [DoFactory.createServiceProvider(true)];
+                const searchString: string = faker.string.alpha(5);
+                const limit: number = 7;
+                const offset: number = 3;
+
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+                organisationRepo.findIdsByTypen.mockResolvedValueOnce(orgIds);
+                serviceProviderRepo.findBySchulstrukturknoten.mockResolvedValueOnce([sps, 1]);
+
+                await service.findManageableLandRoot(permissions, searchString, limit, offset);
+
+                expect(serviceProviderRepo.findBySchulstrukturknoten).toHaveBeenCalledWith(
+                    orgIds,
+                    searchString,
+                    limit,
+                    offset,
+                );
+            });
+
+            it('should return empty result when no LAND or ROOT organisations exist', async () => {
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+                organisationRepo.findIdsByTypen.mockResolvedValueOnce([]);
+                serviceProviderRepo.findBySchulstrukturknoten.mockResolvedValueOnce([[], 0]);
+
+                const result: Result<
+                    Counted<ServiceProvider<true>>,
+                    MissingPermissionsError
+                > = await service.findManageableLandRoot(permissions);
+
+                expectOkResult(result);
+                expect(result.value[0]).toHaveLength(0);
+                expect(result.value[1]).toBe(0);
+                expect(serviceProviderRepo.findBySchulstrukturknoten).toHaveBeenCalledWith(
+                    [],
+                    undefined,
+                    undefined,
+                    undefined,
+                );
+            });
         });
 
-        it('should return MissingPermissionsError when user does not have root-level ANGEBOTE_VERWALTEN', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
+        describe('when user has limited ANGEBOTE_VERWALTEN', () => {
+            it('should return MissingPermissionsError when user does not have root-level ANGEBOTE_VERWALTEN', async () => {
+                const permissions: DeepMocked<PersonPermissions> = createMock(PersonPermissions);
 
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
 
-            const result = await service.findManageableLandRoot(permissions);
+                const result: Result<
+                    Counted<ServiceProvider<true>>,
+                    MissingPermissionsError
+                > = await service.findManageableLandRoot(permissions);
 
-            expectErrResult(result);
-            expect(organisationRepo.findIdsByTypen).not.toHaveBeenCalled();
+                expectErrResult(result);
+                expect(organisationRepo.findIdsByTypen).not.toHaveBeenCalled();
+                expect(serviceProviderRepo.findBySchulstrukturknoten).not.toHaveBeenCalled();
+            });
         });
     });
 });
