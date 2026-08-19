@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
-import { RollenArt } from '../domain/rolle.enums.js';
+import { RollenArt, RollenArtTypName } from '../domain/rolle.enums.js';
 import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
 import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 
@@ -14,8 +14,11 @@ export class FindAvailableRollenForPKCreationQueryParams extends PagedQueryParam
     })
     public readonly organisationId!: OrganisationID;
 
+    @IsEnum(RollenArt)
     @IsOptional()
     @ApiProperty({
+        enum: RollenArt,
+        enumName: RollenArtTypName,
         description: 'The rollenart of the user for which the available rollen should be found',
         required: false,
         nullable: true,
