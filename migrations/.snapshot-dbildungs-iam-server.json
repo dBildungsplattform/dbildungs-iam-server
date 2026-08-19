@@ -2391,7 +2391,7 @@
             "09",
             "10"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "jahrgangsstufe_enum"
         },
         "loeschung_zeitpunkt": {
@@ -2479,7 +2479,7 @@
           "enumItems": [
             "AKTIV"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "personenstatus_enum"
         },
         "revision": {
@@ -2782,7 +2782,7 @@
             "SCHB",
             "NLEHR"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "rollen_art_enum"
         },
         "updated_at": {
@@ -2870,7 +2870,7 @@
             "KOPERS_PFLICHT",
             "MPT_ROLLE"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "rollen_merkmal_enum"
         },
         "rolle_id": {
@@ -3074,26 +3074,25 @@
             "MPT_ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
+            "IMPORT_DURCHFUEHREN",
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
-            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "ROLLEN_ERWEITERN",
             "ANGEBOTE_VERWALTEN",
             "ANGEBOTE_EINGESCHRAENKT_VERWALTEN",
             "SCHULISCHE_VIDIS_ANGEBOTE_ABRUFEN"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "rollen_system_recht_enum"
         }
       },
@@ -3419,7 +3418,7 @@
             "DONE",
             "FAILED"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "db_seed_status_enum"
         }
       },
@@ -3462,11 +3461,11 @@
             "PERSON",
             "ORGANISATION",
             "ROLLE",
+            "ROLLENERWEITERUNG",
             "SERVICE_PROVIDER",
-            "EMAIL_DOMAIN",
-            "ROLLENERWEITERUNG"
+            "EMAIL_DOMAIN"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "referenced_entity_type_enum"
         },
         "uuid": {
@@ -3562,7 +3561,7 @@
             "EMAIL",
             "ITSLEARNING"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "service_provider_system_enum"
         },
         "id": {
@@ -3600,10 +3599,10 @@
             "EMAIL",
             "UNTERRICHT",
             "VERWALTUNG",
-            "HINWEISE",
-            "SCHULISCH"
+            "SCHULISCH",
+            "HINWEISE"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "service_provider_kategorie_enum"
         },
         "keycloak_group": {
@@ -3758,10 +3757,10 @@
           "collation": null,
           "enumItems": [
             "URL",
-            "SCHULPORTAL_ADMINISTRATION",
-            "EMAIL"
+            "EMAIL",
+            "SCHULPORTAL_ADMINISTRATION"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "service_provider_target_enum"
         },
         "updated_at": {
@@ -3842,9 +3841,8 @@
       "checks": [
         {
           "name": "logo_or_logo_id_consistency",
-          "expression": "((logo_id IS NULL) AND (logo IS NULL)) OR ((logo_id IS NULL) AND (logo IS NOT NULL)) OR ((logo_id IS NOT NULL) AND (logo IS NULL))",
-          "definition": "CHECK ((((logo_id IS NULL) AND (logo IS NULL)) OR ((logo_id IS NULL) AND (logo IS NOT NULL)) OR ((logo_id IS NOT NULL) AND (logo IS NULL))))",
-          "columnName": "logo"
+          "expression": "(\"logo_id\" IS NULL AND \"logo\" IS NULL) OR (\"logo_id\" IS NULL AND \"logo\" IS NOT NULL) OR (\"logo_id\" IS NOT NULL AND \"logo\" IS NULL)",
+          "definition": "check ((\"logo_id\" IS NULL AND \"logo\" IS NULL) OR (\"logo_id\" IS NULL AND \"logo\" IS NOT NULL) OR (\"logo_id\" IS NOT NULL AND \"logo\" IS NULL))"
         }
       ],
       "triggers": [],
@@ -3875,7 +3873,7 @@
             "ANBIETEN_IN_SCHULISCHER_ANGEBOTSVERWALTUNG",
             "ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "service_provider_merkmal_enum"
         },
         "service_provider_id": {
@@ -3966,7 +3964,7 @@
             "SCHB",
             "NLEHR"
           ],
-          "mappedType": "unknown",
+          "mappedType": "enum",
           "nativeEnumName": "rollen_art_enum"
         },
         "service_provider_id": {
@@ -4005,7 +4003,7 @@
           ],
           "composite": false,
           "constraint": false,
-          "keyName": "service_provider_rollenarten_whitelist_service_provider_id_inde",
+          "keyName": "service_provider_rollenarten_whitelist_service_provider_id_index",
           "primary": false,
           "unique": false
         }
@@ -4214,8 +4212,8 @@
         "ACTIVE",
         "DEACTIVE",
         "SUSPENDED",
-        "TO_BE_DELETED",
         "FAILED",
+        "TO_BE_DELETED",
         "EXISTS_ONLY_IN_OX"
       ]
     },
@@ -4252,14 +4250,14 @@
       "name": "import_status_enum",
       "schema": "public",
       "items": [
-        "STARTED",
-        "VALID",
-        "INVALID",
-        "INPROGRESS",
         "CANCELLED",
         "COMPLETED",
         "FAILED",
-        "FINISHED"
+        "FINISHED",
+        "INPROGRESS",
+        "INVALID",
+        "STARTED",
+        "VALID"
       ]
     },
     "jahrgangsstufe_enum": {
@@ -4314,9 +4312,9 @@
         "PERSON",
         "ORGANISATION",
         "ROLLE",
+        "ROLLENERWEITERUNG",
         "SERVICE_PROVIDER",
-        "EMAIL_DOMAIN",
-        "ROLLENERWEITERUNG"
+        "EMAIL_DOMAIN"
       ]
     },
     "rollen_art_enum": {
@@ -4351,20 +4349,19 @@
         "MPT_ROLLEN_VERWALTEN",
         "PERSONEN_SOFORT_LOESCHEN",
         "PERSONEN_VERWALTEN",
+        "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+        "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
         "SCHULEN_VERWALTEN",
         "KLASSEN_VERWALTEN",
         "SCHULTRAEGER_VERWALTEN",
-        "MIGRATION_DURCHFUEHREN",
         "PERSON_SYNCHRONISIEREN",
         "CRON_DURCHFUEHREN",
-        "IMPORT_DURCHFUEHREN",
         "PERSONEN_ANLEGEN",
+        "IMPORT_DURCHFUEHREN",
         "PERSONEN_LESEN",
         "BULK_VERWALTEN",
         "SCHULPORTAL_VERWALTEN",
         "HINWEISE_BEARBEITEN",
-        "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
-        "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
         "ROLLEN_ERWEITERN",
         "ANGEBOTE_VERWALTEN",
         "ANGEBOTE_EINGESCHRAENKT_VERWALTEN",
@@ -4378,8 +4375,8 @@
         "EMAIL",
         "UNTERRICHT",
         "VERWALTUNG",
-        "HINWEISE",
-        "SCHULISCH"
+        "SCHULISCH",
+        "HINWEISE"
       ]
     },
     "service_provider_merkmal_enum": {
@@ -4406,8 +4403,8 @@
       "schema": "public",
       "items": [
         "URL",
-        "SCHULPORTAL_ADMINISTRATION",
-        "EMAIL"
+        "EMAIL",
+        "SCHULPORTAL_ADMINISTRATION"
       ]
     },
     "traegerschaft_enum": {
