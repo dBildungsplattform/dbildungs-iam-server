@@ -119,10 +119,7 @@ export class UserExternaldataWorkflowAggregate {
         }
 
         this.checkedExternalPkData = this.computeCheckedExternalPkData(externalPkData);
-        this.mergedExternalPkData = this.computeMergedExternalPkData(
-            this.checkedExternalPkData,
-            this.erweiterteSP ?? [],
-        );
+        this.mergedExternalPkData = this.computeMergedExternalPkData(this.checkedExternalPkData, this.erweiterteSP);
         this.externalPkDataWithVidisAngebotId = this.computeExternalPkDataWithVidisAngebotId(this.mergedExternalPkData);
         this.vidisDienststellennummern = this.computeVidisDienststellennummern(this.externalPkDataWithVidisAngebotId);
 
