@@ -346,14 +346,14 @@ export class ServiceProviderRepo {
             where.name = { $ilike: `%${searchQuery}%` };
         }
 
+        const exclude: readonly ['logo'] | undefined = ['logo'];
         const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
             ServiceProviderEntity,
             where,
             {
-                exclude: ['logo'] as const,
+                exclude,
                 limit,
                 offset,
-                orderBy: { name: 'ASC' },
             },
         );
 
