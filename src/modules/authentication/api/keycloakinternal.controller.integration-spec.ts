@@ -13,6 +13,7 @@ import { EmailAddressResponse } from '../../../email/modules/core/api/dtos/respo
 import { EmailAddressStatusEnum } from '../../../email/modules/core/persistence/email-address-status.entity.js';
 import { ExternalDataCacheInterceptor } from '../../../shared/cache/external-data-cache-interceptor.js';
 import { EntityNotFoundError, MultipleRollenartenError } from '../../../shared/error/index.js';
+import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';
 import { ValidationExceptionFilter } from '../../../shared/filter/validation-exception-filter.js';
 import { Ok } from '../../../shared/util/result.js';
@@ -35,6 +36,7 @@ import { ServiceProviderSystem } from '../../service-provider/domain/service-pro
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
+import { UserExternaldataWorkflowAggregate } from '../domain/user-extenaldata.workflow.js';
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
 import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { KeycloakInternalController } from './keycloakinternal.controller.js';
@@ -480,12 +482,44 @@ describe('KeycloakInternalController', () => {
             );
         });
 
-        it('should throw error if aggregate doesnt initialize fields field correctly', async () => {
+        it('should throw EntityNotFoundError if person not found by keycloak user id', async () => {
             const keycloakSub: string = faker.string.uuid();
             personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
 
             await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toBeInstanceOf(
                 EntityNotFoundError,
+            );
+        });
+
+        it('should throw UserExternalDataWorkflowError when workflow fields are not initialized', async () => {
+            const keycloakSub: string = faker.string.uuid();
+            const person: Person<true> = DoFactory.createPerson(true, { keycloakUserId: keycloakSub });
+
+            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
+
+            // Create a mock workflow that returns no error but has undefined fields
+            const workflowMock: DeepMocked<UserExternaldataWorkflowAggregate> =
+                createMock<UserExternaldataWorkflowAggregate>(UserExternaldataWorkflowAggregate);
+            workflowMock.initialize.mockResolvedValueOnce(undefined);
+            workflowMock.person = undefined;
+            workflowMock.checkedExternalPkData = undefined;
+            workflowMock.mergedExternalPkData = undefined;
+            workflowMock.externalPkDataWithVidisAngebotId = undefined;
+            workflowMock.vidisDienststellennummern = undefined;
+            workflowMock.uniqDienststellenNummern = undefined;
+
+            const workflowFactoryMock: DeepMocked<UserExternaldataWorkflowFactory> =
+                createMock<UserExternaldataWorkflowFactory>(UserExternaldataWorkflowFactory);
+            workflowFactoryMock.createNew.mockReturnValueOnce(workflowMock);
+
+            // Create a new controller instance with the mocked factory
+            const controllerWithMockedFactory: KeycloakInternalController = new KeycloakInternalController(
+                workflowFactoryMock,
+                personRepoMock,
+            );
+
+            await expect(controllerWithMockedFactory.getExternalData({ sub: keycloakSub })).rejects.toThrow(
+                UserExternalDataWorkflowError,
             );
         });
     });

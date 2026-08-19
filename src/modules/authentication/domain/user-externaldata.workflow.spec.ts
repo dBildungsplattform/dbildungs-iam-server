@@ -79,14 +79,8 @@ describe('UserExternaldataWorkflow', () => {
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce([]);
             dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
-            const emailAddress: EmailAddress<true> = EmailAddress.construct({
-                id: faker.string.uuid(),
-                createdAt: faker.date.past(),
-                updatedAt: faker.date.recent(),
-                address: faker.internet.email(),
-                priority: 0,
+            const emailAddress: EmailAddress<true> = DoFactory.createMicroserviceEmailAddress(true, {
                 spshPersonId: person.id,
-                oxUserCounter: undefined,
                 externalId: oxLoginId,
                 sortedStatuses: [{ status: EmailAddressStatusEnum.ACTIVE }],
             });
@@ -169,14 +163,8 @@ describe('UserExternaldataWorkflow', () => {
             dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce([]);
             dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
-            const emailAddress: EmailAddress<true> = EmailAddress.construct({
-                id: faker.string.uuid(),
-                createdAt: faker.date.past(),
-                updatedAt: faker.date.recent(),
-                address: faker.internet.email(),
-                priority: 0,
+            const emailAddress: EmailAddress<true> = DoFactory.createMicroserviceEmailAddress(true, {
                 spshPersonId: person.id,
-                oxUserCounter: undefined,
                 externalId: oxLoginId,
                 sortedStatuses: [{ status: EmailAddressStatusEnum.SUSPENDED }],
             });
@@ -193,6 +181,35 @@ describe('UserExternaldataWorkflow', () => {
             expect(sut.email).toBeUndefined();
             expect(sut.checkedExternalPkData).toBeDefined();
             expect(sut.oxLoginId).toBeUndefined();
+        });
+
+        it('should set oxLoginId but not email when status is DEACTIVE', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            const oxLoginId: string = faker.string.uuid();
+            const oxContextId: string = 'test-context-id';
+
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce([]);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValueOnce(true);
+            const emailAddress: EmailAddress<true> = DoFactory.createMicroserviceEmailAddress(true, {
+                spshPersonId: person.id,
+                externalId: oxLoginId,
+                sortedStatuses: [{ status: EmailAddressStatusEnum.DEACTIVE }],
+            });
+
+            const response: EmailAddressResponse = new EmailAddressResponse(
+                emailAddress,
+                emailAddress.getStatus()!,
+                oxContextId,
+            );
+            emailResolverServiceMock.findEmailBySpshPersonAsEmailAddressResponse.mockResolvedValueOnce(Ok(response));
+
+            await sut.initialize(person.id);
+            expect(sut.person).toBeDefined();
+            expect(sut.email).toBeUndefined();
+            expect(sut.checkedExternalPkData).toBeDefined();
+            expect(sut.oxLoginId).toBe(`${oxLoginId}@${oxContextId}`);
         });
 
         it('should return entity Not found error when person not found', async () => {
