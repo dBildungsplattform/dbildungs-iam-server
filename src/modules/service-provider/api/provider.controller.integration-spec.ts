@@ -1014,7 +1014,7 @@ describe('ServiceProvider API', () => {
         });
 
         describe('when user does not have permission', () => {
-            it('should return 404 when user does not have root-level ANGEBOTE_VERWALTEN', async () => {
+            it('should return 404', async () => {
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                     all: false,
                     orgaIds: [faker.string.uuid()],
