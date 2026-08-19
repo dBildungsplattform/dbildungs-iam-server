@@ -665,6 +665,7 @@ describe('Provider Controller Test', () => {
 
                 expect(serviceProviderServiceMock.findAuthorized).toHaveBeenCalledWith(personPermissionsMock, {
                     kategorien: [kategorie],
+                    searchFilter: undefined,
                     limit: 10,
                     offset: 0,
                 });
@@ -673,6 +674,30 @@ describe('Provider Controller Test', () => {
                 expect(result.items[0]?.id).toBe(matchingServiceProvider.id);
             },
         );
+
+        it('should forward the searchFilter to the service', async () => {
+            const searchFilter: string = faker.company.name();
+            const matchingServiceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                name: searchFilter,
+            });
+            const manageableObjects: ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount[] =
+                createManageableObjects([matchingServiceProvider]);
+
+            serviceProviderServiceMock.findAuthorized.mockResolvedValue([manageableObjects, 1]);
+
+            const params: ManageableServiceProvidersParams = { kategorien: [], searchFilter, limit: 10, offset: 0 };
+            const result: RawPagedResponse<ManageableServiceProviderSimpleListEntryResponse> =
+                await providerController.getManageableServiceProviders(personPermissionsMock, params);
+
+            expect(serviceProviderServiceMock.findAuthorized).toHaveBeenCalledWith(personPermissionsMock, {
+                kategorien: [],
+                searchFilter,
+                limit: 10,
+                offset: 0,
+            });
+            expect(result.items).toHaveLength(1);
+            expect(result.items[0]?.id).toBe(matchingServiceProvider.id);
+        });
     });
 
     describe('getManageableServiceProvidersForOrganisationId', () => {

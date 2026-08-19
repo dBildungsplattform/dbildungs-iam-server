@@ -263,6 +263,80 @@ describe('ServiceProviderRepo', () => {
             expect(unterrichtCount).toEqual(1);
         });
 
+        it('should filter by searchFilter matching the name case-insensitively', async () => {
+            const [matchingServiceProvider]: [ServiceProvider<true>, ServiceProvider<true>] = await Promise.all([
+                createAndPersistServiceProvider(em, { name: 'Alpha Angebot' }),
+                createAndPersistServiceProvider(em, { name: 'Beta Angebot' }),
+            ]);
+
+            const [result, count]: Counted<ServiceProvider<true>> = await sut.findByOrganisationsWithMerkmale('all', {
+                searchFilter: 'alpha',
+            });
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.id).toEqual(matchingServiceProvider.id);
+            expect(count).toEqual(1);
+        });
+
+        it('should filter by searchFilter matching a substring of the name', async () => {
+            const [matchingServiceProvider]: [ServiceProvider<true>, ServiceProvider<true>] = await Promise.all([
+                createAndPersistServiceProvider(em, { name: 'Gamma Portal' }),
+                createAndPersistServiceProvider(em, { name: 'Delta Portal' }),
+            ]);
+
+            const [result, count]: Counted<ServiceProvider<true>> = await sut.findByOrganisationsWithMerkmale('all', {
+                searchFilter: 'Gamma',
+            });
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.id).toEqual(matchingServiceProvider.id);
+            expect(count).toEqual(1);
+        });
+
+        it('should return no results when searchFilter matches no name', async () => {
+            await Promise.all([
+                createAndPersistServiceProvider(em, { name: 'Alpha Angebot' }),
+                createAndPersistServiceProvider(em, { name: 'Beta Angebot' }),
+            ]);
+
+            const [result, count]: Counted<ServiceProvider<true>> = await sut.findByOrganisationsWithMerkmale('all', {
+                searchFilter: 'nonexistent',
+            });
+
+            expect(result).toHaveLength(0);
+            expect(count).toEqual(0);
+        });
+
+        it('should combine searchFilter with kategorie filter', async () => {
+            const [matchingServiceProvider]: [
+                ServiceProvider<true>,
+                ServiceProvider<true>,
+                ServiceProvider<true>,
+            ] = await Promise.all([
+                createAndPersistServiceProvider(em, {
+                    name: 'Alpha Angebot',
+                    kategorie: ServiceProviderKategorie.EMAIL,
+                }),
+                createAndPersistServiceProvider(em, {
+                    name: 'Alpha Angebot',
+                    kategorie: ServiceProviderKategorie.UNTERRICHT,
+                }),
+                createAndPersistServiceProvider(em, {
+                    name: 'Beta Angebot',
+                    kategorie: ServiceProviderKategorie.EMAIL,
+                }),
+            ]);
+
+            const [result, count]: Counted<ServiceProvider<true>> = await sut.findByOrganisationsWithMerkmale('all', {
+                searchFilter: 'alpha',
+                kategorien: [ServiceProviderKategorie.EMAIL],
+            });
+
+            expect(result).toHaveLength(1);
+            expect(result[0]!.id).toEqual(matchingServiceProvider.id);
+            expect(count).toEqual(1);
+        });
+
         it('should respect the limit and offset', async () => {
             const total: number = 10;
             await Promise.all(Array.from({ length: total }, () => createAndPersistServiceProvider(em)));
