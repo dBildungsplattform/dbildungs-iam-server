@@ -308,24 +308,21 @@ describe('ServiceProviderRepo', () => {
         });
 
         it('should combine searchFilter with kategorie filter', async () => {
-            const [matchingServiceProvider]: [
-                ServiceProvider<true>,
-                ServiceProvider<true>,
-                ServiceProvider<true>,
-            ] = await Promise.all([
-                createAndPersistServiceProvider(em, {
-                    name: 'Alpha Angebot',
-                    kategorie: ServiceProviderKategorie.EMAIL,
-                }),
-                createAndPersistServiceProvider(em, {
-                    name: 'Alpha Angebot',
-                    kategorie: ServiceProviderKategorie.UNTERRICHT,
-                }),
-                createAndPersistServiceProvider(em, {
-                    name: 'Beta Angebot',
-                    kategorie: ServiceProviderKategorie.EMAIL,
-                }),
-            ]);
+            const [matchingServiceProvider]: [ServiceProvider<true>, ServiceProvider<true>, ServiceProvider<true>] =
+                await Promise.all([
+                    createAndPersistServiceProvider(em, {
+                        name: 'Alpha Angebot',
+                        kategorie: ServiceProviderKategorie.EMAIL,
+                    }),
+                    createAndPersistServiceProvider(em, {
+                        name: 'Alpha Angebot',
+                        kategorie: ServiceProviderKategorie.UNTERRICHT,
+                    }),
+                    createAndPersistServiceProvider(em, {
+                        name: 'Beta Angebot',
+                        kategorie: ServiceProviderKategorie.EMAIL,
+                    }),
+                ]);
 
             const [result, count]: Counted<ServiceProvider<true>> = await sut.findByOrganisationsWithMerkmale('all', {
                 searchFilter: 'alpha',
