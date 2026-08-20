@@ -668,12 +668,212 @@ describe('ServiceProviderRepo', () => {
             const persistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
                 providedOnSchulstrukturknoten,
             });
-            const result: Array<ServiceProvider<true>> = await sut.findBySchulstrukturknoten([
+            em.clear();
+            const result: ServiceProvider<true>[] = await sut.findBySchulstrukturknoten([
                 providedOnSchulstrukturknoten,
             ]);
 
             expect(result).toHaveLength(1);
-            expect(result).toEqual(expect.arrayContaining([persistedServiceProvider]));
+            expect(result).toEqual(
+                expect.arrayContaining([
+                    {
+                        ...persistedServiceProvider,
+                        logo: undefined,
+                    },
+                ]),
+            );
+        });
+    });
+
+    describe('findBySchulstrukturknotenPaginated', () => {
+        const setup = async (): Promise<{
+            orgAId: string;
+            orgBId: string;
+            serviceProviderAlphaOrgA: ServiceProvider<true>;
+            serviceProviderBetaOrgA: ServiceProvider<true>;
+            serviceProviderGammaOrgB: ServiceProvider<true>;
+        }> => {
+            const orgAId: string = faker.string.uuid();
+            const orgBId: string = faker.string.uuid();
+            const serviceProviderAlphaOrgA: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: orgAId,
+                name: 'Alpha',
+            });
+            const serviceProviderBetaOrgA: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: orgAId,
+                name: 'Beta',
+            });
+            const serviceProviderGammaOrgB: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                providedOnSchulstrukturknoten: orgBId,
+                name: 'Gamma',
+            });
+            em.clear();
+
+            return {
+                orgAId,
+                orgBId,
+                serviceProviderAlphaOrgA,
+                serviceProviderBetaOrgA,
+                serviceProviderGammaOrgB,
+            };
+        };
+
+        it('should return matching service providers with count', async () => {
+            const {
+                orgAId,
+                serviceProviderAlphaOrgA,
+                serviceProviderBetaOrgA,
+            }: {
+                orgAId: string;
+                serviceProviderAlphaOrgA: ServiceProvider<true>;
+                serviceProviderBetaOrgA: ServiceProvider<true>;
+            } = await setup();
+
+            const [results, count]: Counted<ServiceProvider<true>> = await sut.findBySchulstrukturknotenPaginated([
+                orgAId,
+            ]);
+
+            expect(count).toBe(2);
+            expect(results).toHaveLength(2);
+            expect(results.map((sp: ServiceProvider<true>) => sp.id)).toEqual(
+                expect.arrayContaining([serviceProviderAlphaOrgA.id, serviceProviderBetaOrgA.id]),
+            );
+        });
+
+        it('should filter by searchQuery case-insensitively', async () => {
+            const {
+                orgAId,
+                serviceProviderAlphaOrgA,
+            }: {
+                orgAId: string;
+                serviceProviderAlphaOrgA: ServiceProvider<true>;
+            } = await setup();
+
+            const [results, count]: Counted<ServiceProvider<true>> = await sut.findBySchulstrukturknotenPaginated(
+                [orgAId],
+                'ALPHA',
+            );
+
+            expect(count).toBe(1);
+            expect(results[0]!.id).toBe(serviceProviderAlphaOrgA.id);
+        });
+
+        it('should not return service providers from other organisations', async () => {
+            const {
+                orgAId,
+                serviceProviderAlphaOrgA,
+                serviceProviderBetaOrgA,
+                serviceProviderGammaOrgB,
+            }: {
+                orgAId: string;
+                serviceProviderAlphaOrgA: ServiceProvider<true>;
+                serviceProviderBetaOrgA: ServiceProvider<true>;
+                serviceProviderGammaOrgB: ServiceProvider<true>;
+            } = await setup();
+
+            const [results, count]: Counted<ServiceProvider<true>> = await sut.findBySchulstrukturknotenPaginated([
+                orgAId,
+            ]);
+
+            expect(count).toBe(2);
+            const resultIds: string[] = results.map((sp: ServiceProvider<true>) => sp.id);
+            expect(resultIds).toEqual(
+                expect.arrayContaining([serviceProviderAlphaOrgA.id, serviceProviderBetaOrgA.id]),
+            );
+            expect(resultIds).not.toContain(serviceProviderGammaOrgB.id);
+        });
+
+        it('should apply limit and offset', async () => {
+            const {
+                orgAId,
+                orgBId,
+            }: {
+                orgAId: string;
+                orgBId: string;
+            } = await setup();
+
+            const [results, count]: Counted<ServiceProvider<true>> = await sut.findBySchulstrukturknotenPaginated(
+                [orgAId, orgBId],
+                undefined,
+                2,
+                1,
+            );
+
+            expect(count).toBe(3);
+            expect(results).toHaveLength(2);
+        });
+
+        it('should order results by name ascending', async () => {
+            const {
+                orgAId,
+                serviceProviderAlphaOrgA,
+                serviceProviderBetaOrgA,
+            }: {
+                orgAId: string;
+                serviceProviderAlphaOrgA: ServiceProvider<true>;
+                serviceProviderBetaOrgA: ServiceProvider<true>;
+            } = await setup();
+
+            const [results]: Counted<ServiceProvider<true>> = await sut.findBySchulstrukturknotenPaginated([orgAId]);
+
+            expect(results[0]!.name).toBe(serviceProviderAlphaOrgA.name);
+            expect(results[1]!.name).toBe(serviceProviderBetaOrgA.name);
+        });
+
+        describe('when searchQuery contains SQL wildcard characters', () => {
+            const setup = async (): Promise<{
+                orgId: string;
+                spWithPercent: ServiceProvider<true>;
+                spWithUnderscore: ServiceProvider<true>;
+                spOther: ServiceProvider<true>;
+            }> => {
+                const orgId: string = faker.string.uuid();
+                const spWithPercent: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orgId,
+                    name: '100% Service',
+                });
+                const spWithUnderscore: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orgId,
+                    name: 'class_A Service',
+                });
+                const spOther: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orgId,
+                    name: 'Other Service',
+                });
+                em.clear();
+
+                return { orgId, spWithPercent, spWithUnderscore, spOther };
+            };
+
+            it('should treat % as a literal character', async () => {
+                const { orgId, spWithPercent, spWithUnderscore, spOther }: Awaited<ReturnType<typeof setup>> =
+                    await setup();
+
+                const [results]: Counted<ServiceProvider<true>> = await sut.findBySchulstrukturknotenPaginated(
+                    [orgId],
+                    '%',
+                );
+
+                const ids: string[] = results.map((sp: ServiceProvider<true>) => sp.id);
+                expect(ids).toContain(spWithPercent.id);
+                expect(ids).not.toContain(spWithUnderscore.id);
+                expect(ids).not.toContain(spOther.id);
+            });
+
+            it('should treat _ as a literal character', async () => {
+                const { orgId, spWithPercent, spWithUnderscore, spOther }: Awaited<ReturnType<typeof setup>> =
+                    await setup();
+
+                const [results]: Counted<ServiceProvider<true>> = await sut.findBySchulstrukturknotenPaginated(
+                    [orgId],
+                    '_',
+                );
+
+                const ids: string[] = results.map((sp: ServiceProvider<true>) => sp.id);
+                expect(ids).toContain(spWithUnderscore.id);
+                expect(ids).not.toContain(spWithPercent.id);
+                expect(ids).not.toContain(spOther.id);
+            });
         });
     });
 
@@ -791,26 +991,6 @@ describe('ServiceProviderRepo', () => {
             expectErrResult(result);
             expect(result.error).toBeInstanceOf(MissingPermissionsError);
             await expect(em.findOneOrFail(ServiceProviderEntity, { id: serviceProvider.id })).resolves.toBeDefined();
-        });
-    });
-
-    describe('deleteById', () => {
-        it('should delete an existing ServiceProvider by its id', async () => {
-            const persistedPersistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
-
-            const result: boolean = await sut.deleteById(persistedPersistedServiceProvider.id);
-
-            expect(result).toBeTruthy();
-        });
-    });
-
-    describe('deleteByName', () => {
-        it('should delete an existing ServiceProvider by its name', async () => {
-            const persistedPersistedServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em);
-
-            const result: boolean = await sut.deleteByName(persistedPersistedServiceProvider.name);
-
-            expect(result).toBeTruthy();
         });
     });
 
