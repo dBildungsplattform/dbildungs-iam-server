@@ -354,6 +354,7 @@ export class ServiceProviderRepo {
                 exclude,
                 limit,
                 offset,
+                orderBy: { name: 'ASC', id: 'ASC' },
             },
         );
 
