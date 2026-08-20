@@ -1,22 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { HealthCheckService, HealthIndicatorFunction, MikroOrmHealthIndicator } from '@nestjs/terminus';
+import { HealthCheckService, HealthIndicatorFunction } from '@nestjs/terminus';
 import { EmailHealthController } from './email-health.controller.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
+import { DatabaseHealthIndicator } from '../../../modules/health/database.health-indicator.js';
 
 describe('EmailHealthController', () => {
     let controller: EmailHealthController;
     let healthCheckService: DeepMocked<HealthCheckService>;
-    let mikroOrmHealthIndicator: MikroOrmHealthIndicator;
+    let databaseHealthIndicator: DeepMocked<DatabaseHealthIndicator>;
 
     beforeAll(async () => {
         healthCheckService = createMock(HealthCheckService);
-        mikroOrmHealthIndicator = createMock(MikroOrmHealthIndicator);
+        databaseHealthIndicator = createMock(DatabaseHealthIndicator);
 
         const module: TestingModule = await Test.createTestingModule({
             controllers: [EmailHealthController],
             providers: [
                 { provide: HealthCheckService, useValue: healthCheckService },
-                { provide: MikroOrmHealthIndicator, useValue: mikroOrmHealthIndicator },
+                { provide: DatabaseHealthIndicator, useValue: databaseHealthIndicator },
             ],
         }).compile();
 
@@ -38,6 +39,6 @@ describe('EmailHealthController', () => {
             // eslint-disable-next-line @typescript-eslint/await-thenable
             await Promise.all(lastCallArguments.map((hif: HealthIndicatorFunction) => hif.call(hif)));
         }
-        expect(mikroOrmHealthIndicator.pingCheck).toHaveBeenCalledWith('database', { timeout: 1500 });
+        expect(databaseHealthIndicator.check).toHaveBeenCalled();
     });
 });
