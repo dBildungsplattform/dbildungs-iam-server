@@ -947,7 +947,10 @@ describe('ServiceProvider API', () => {
                 expect(response.status).toBe(200);
                 expect(body.total).toBe(4);
                 expect(body.items.map((item: ServiceProviderResponse) => item.id)).toEqual(
-                    expect.arrayContaining([...landServiceProviders.map((sp) => sp.id), rootServiceProvider.id]),
+                    expect.arrayContaining([
+                        ...landServiceProviders.map((sp: ServiceProvider<true>) => sp.id),
+                        rootServiceProvider.id,
+                    ]),
                 );
                 expect(body.items.map((item: ServiceProviderResponse) => item.id)).not.toContain(
                     schuleServiceProvider.id,
