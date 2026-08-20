@@ -188,12 +188,8 @@ export class ServiceProviderService {
             OrganisationsTyp.ROOT,
         ]);
 
-        const counted: Counted<ServiceProvider<true>> = await this.serviceProviderRepo.findBySchulstrukturknoten(
-            orgIds,
-            searchString,
-            limit,
-            offset,
-        );
+        const counted: Counted<ServiceProvider<true>> =
+            await this.serviceProviderRepo.findBySchulstrukturknotenPaginated(orgIds, searchString, limit, offset);
 
         return Ok(counted);
     }

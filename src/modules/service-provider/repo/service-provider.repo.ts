@@ -334,6 +334,21 @@ export class ServiceProviderRepo {
 
     public async findBySchulstrukturknoten(
         organisationIds: Array<OrganisationID>,
+    ): Promise<Array<ServiceProvider<true>>> {
+        const exclude: readonly ['logo'] | undefined = ['logo'];
+        return (
+            await this.em.find(
+                ServiceProviderEntity,
+                { providedOnSchulstrukturknoten: { $in: organisationIds } },
+                {
+                    exclude,
+                },
+            )
+        ).map(mapEntityToAggregate);
+    }
+
+    public async findBySchulstrukturknotenPaginated(
+        organisationIds: Array<OrganisationID>,
         searchQuery?: string,
         limit?: number,
         offset?: number,

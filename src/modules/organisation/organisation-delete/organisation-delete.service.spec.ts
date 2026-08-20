@@ -155,8 +155,7 @@ describe('OrganisationDeleteService', () => {
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             personenkontextRepo.findBy.mockResolvedValue([[], 0]);
             serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([
-                [DoFactory.createServiceProvider(true, { providedOnSchulstrukturknoten: organisationId })],
-                1,
+                DoFactory.createServiceProvider(true, { providedOnSchulstrukturknoten: organisationId }),
             ]);
 
             const result: void | DomainError = await organisationDeleteService.deleteOrganisation(organisationId);
@@ -170,7 +169,7 @@ describe('OrganisationDeleteService', () => {
             const organisationId: OrganisationID = faker.string.uuid();
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             personenkontextRepo.findBy.mockResolvedValue([[], 0]);
-            serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([[], 0]);
+            serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             rollenerweiterungRepo.findManyByOrganisationId.mockResolvedValue([DoFactory.createRollenerweiterung(true)]);
 
             const result: void | DomainError = await organisationDeleteService.deleteOrganisation(organisationId);

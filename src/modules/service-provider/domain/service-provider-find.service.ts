@@ -32,10 +32,9 @@ export class ServiceProviderFindService {
 
         const parentOrganisations: Organisation<true>[] =
             await this.organisationRepo.findParentOrgasForIdSortedByDepthAsc(schulstrukturknotenId);
-        const [serviceProviders]: Counted<ServiceProvider<true>> =
-            await this.serviceProviderRepo.findBySchulstrukturknoten(
-                parentOrganisations.map((organisation: Organisation<true>) => organisation.id),
-            );
+        const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.findBySchulstrukturknoten(
+            parentOrganisations.map((organisation: Organisation<true>) => organisation.id),
+        );
 
         return Ok(serviceProviders);
     }
