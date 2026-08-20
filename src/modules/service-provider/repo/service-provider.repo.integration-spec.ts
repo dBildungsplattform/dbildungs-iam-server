@@ -817,6 +817,62 @@ describe('ServiceProviderRepo', () => {
             expect(results[0]!.name).toBe(serviceProviderAlphaOrgA.name);
             expect(results[1]!.name).toBe(serviceProviderBetaOrgA.name);
         });
+
+        describe('when searchQuery contains SQL wildcard characters', () => {
+            const setup = async (): Promise<{
+                orgId: string;
+                spWithPercent: ServiceProvider<true>;
+                spWithUnderscore: ServiceProvider<true>;
+                spOther: ServiceProvider<true>;
+            }> => {
+                const orgId: string = faker.string.uuid();
+                const spWithPercent: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orgId,
+                    name: '100% Service',
+                });
+                const spWithUnderscore: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orgId,
+                    name: 'class_A Service',
+                });
+                const spOther: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: orgId,
+                    name: 'Other Service',
+                });
+                em.clear();
+
+                return { orgId, spWithPercent, spWithUnderscore, spOther };
+            };
+
+            it('should treat % as a literal character', async () => {
+                const { orgId, spWithPercent, spWithUnderscore, spOther }: Awaited<ReturnType<typeof setup>> =
+                    await setup();
+
+                const [results]: Counted<ServiceProvider<true>> = await sut.findBySchulstrukturknotenPaginated(
+                    [orgId],
+                    '%',
+                );
+
+                const ids: string[] = results.map((sp: ServiceProvider<true>) => sp.id);
+                expect(ids).toContain(spWithPercent.id);
+                expect(ids).not.toContain(spWithUnderscore.id);
+                expect(ids).not.toContain(spOther.id);
+            });
+
+            it('should treat _ as a literal character', async () => {
+                const { orgId, spWithPercent, spWithUnderscore, spOther }: Awaited<ReturnType<typeof setup>> =
+                    await setup();
+
+                const [results]: Counted<ServiceProvider<true>> = await sut.findBySchulstrukturknotenPaginated(
+                    [orgId],
+                    '_',
+                );
+
+                const ids: string[] = results.map((sp: ServiceProvider<true>) => sp.id);
+                expect(ids).toContain(spWithUnderscore.id);
+                expect(ids).not.toContain(spWithPercent.id);
+                expect(ids).not.toContain(spOther.id);
+            });
+        });
     });
 
     describe('fetchRolleServiceProvidersWithoutPerson', () => {

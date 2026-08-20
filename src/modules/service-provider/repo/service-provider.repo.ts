@@ -358,7 +358,8 @@ export class ServiceProviderRepo {
         };
 
         if (searchQuery) {
-            where.name = { $ilike: `%${searchQuery}%` };
+            const escapedPercentAndUnderscoreWildcards: string = searchQuery.replace(/[%_\\]/g, '\\$&');
+            where.name = { $ilike: `%${escapedPercentAndUnderscoreWildcards}%` };
         }
 
         const exclude: readonly ['logo'] | undefined = ['logo'];
