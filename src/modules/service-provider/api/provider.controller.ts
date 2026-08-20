@@ -310,7 +310,7 @@ export class ProviderController {
         description: 'The service providers were successfully returned.',
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get service providers.' })
-    @ApiForbiddenResponse({ description: 'Root-level ANGEBOTE_VERWALTEN permission required.' })
+    @ApiNotFoundResponse({ description: 'Root-level ANGEBOTE_VERWALTEN permission required.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting service providers.' })
     public async getManageableLandRootServiceProviders(
         @Permissions() permissions: IPersonPermissions,
