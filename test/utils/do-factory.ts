@@ -29,6 +29,11 @@ import {
 import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
 
+// <-- Not part of the domain, need to be fixed! -->
+import { EmailAddress as MicroserviceEmailAddress } from '../../src/email/modules/core/domain/email-address.js';
+import { EmailAddressStatusEnum } from '../../src/email/modules/core/persistence/email-address-status.entity.js';
+// <-- Fix end -->
+
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
         this: void,
@@ -314,5 +319,34 @@ export class DoFactory {
             domain: props?.domain ?? faker.internet.domainName(),
             spshServiceProviderId: props?.spshServiceProviderId ?? faker.string.uuid(),
         }) as EmailDomain<WasPersisted>;
+    }
+
+    public static createMicroserviceEmailAddress<WasPersisted extends boolean>(
+        withId: WasPersisted,
+        props?: Partial<MicroserviceEmailAddress<WasPersisted>>,
+    ): MicroserviceEmailAddress<WasPersisted> {
+        if (withId) {
+            return MicroserviceEmailAddress.construct({
+                id: props?.id ?? faker.string.uuid(),
+                createdAt: props?.createdAt ?? faker.date.past(),
+                updatedAt: props?.updatedAt ?? faker.date.recent(),
+                address: props?.address ?? faker.internet.email(),
+                priority: props?.priority ?? 0,
+                spshPersonId: props?.spshPersonId ?? faker.string.uuid(),
+                oxUserCounter: props?.oxUserCounter,
+                externalId: props?.externalId ?? faker.string.uuid(),
+                markedForCron: props?.markedForCron,
+                sortedStatuses: props?.sortedStatuses ?? [{ status: EmailAddressStatusEnum.ACTIVE }],
+            }) as MicroserviceEmailAddress<WasPersisted>;
+        }
+        return MicroserviceEmailAddress.createNew({
+            address: props?.address ?? faker.internet.email(),
+            priority: props?.priority ?? 0,
+            spshPersonId: props?.spshPersonId ?? faker.string.uuid(),
+            oxUserCounter: props?.oxUserCounter,
+            externalId: props?.externalId ?? faker.string.uuid(),
+            markedForCron: props?.markedForCron,
+            sortedStatuses: props?.sortedStatuses ?? [{ status: EmailAddressStatusEnum.ACTIVE }],
+        }) as MicroserviceEmailAddress<WasPersisted>;
     }
 }
