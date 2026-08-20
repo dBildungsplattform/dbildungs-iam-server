@@ -1,6 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import fs from 'fs';
+import fs from 'node:fs';
 import {
     CommonTestModule,
     DatabaseTestModule,

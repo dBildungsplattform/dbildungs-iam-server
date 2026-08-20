@@ -5,7 +5,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { DynamicModule, Inject, OnModuleDestroy, Optional } from '@nestjs/common';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { randomInt, randomUUID } from 'crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { PullPolicy } from 'testcontainers';
 import { DbConfig } from '../../src/shared/config/index.js';
 

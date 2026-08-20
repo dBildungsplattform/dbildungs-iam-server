@@ -7,7 +7,7 @@ import { DatabaseTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DoFactory } fro
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 
 import { faker } from '@faker-js/faker';
-import assert from 'assert';
+import assert from 'node:assert';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { EmailResolverService } from '../../../modules/email-microservice/domain/email-resolver.service.js';

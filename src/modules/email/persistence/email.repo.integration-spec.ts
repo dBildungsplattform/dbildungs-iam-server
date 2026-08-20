@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM, NotFoundError, RequiredEntityData } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import assert from 'assert';
+import assert from 'node:assert';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import {
     CommonTestModule,

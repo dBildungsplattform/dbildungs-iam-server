@@ -4,7 +4,7 @@ import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common'
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request } from 'express';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { Observable } from 'rxjs';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
@@ -23,7 +23,7 @@ import { OrganisationEntity } from '../../organisation/persistence/organisation.
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
-import path from 'path';
+import path from 'node:path';
 import { CommonTestModule } from '../../../../test/utils/common-test.module.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { SharedExceptionFilter } from '../../../shared/filter/shared-exception-filter.js';

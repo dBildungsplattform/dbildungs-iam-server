@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { MikroORM } from '@mikro-orm/core';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import assert from 'assert';
+import assert from 'node:assert';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ConfigTestModule, DatabaseTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
