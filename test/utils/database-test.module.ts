@@ -17,6 +17,11 @@ type DatabaseTestModuleOptions = {
 export class DatabaseTestModule implements OnModuleDestroy {
     private static postgres: Option<StartedPostgreSqlContainer>;
 
+    public static async stopContainer(): Promise<void> {
+        await DatabaseTestModule.postgres?.stop();
+        DatabaseTestModule.postgres = undefined;
+    }
+
     public static forRoot(options?: DatabaseTestModuleOptions): DynamicModule {
         return {
             module: DatabaseTestModule,
@@ -84,8 +89,6 @@ export class DatabaseTestModule implements OnModuleDestroy {
         if (this.orm?.isConnected()) {
             await this.orm.close();
         }
-        // Container cleanup is handled by testcontainers when the process exits
-        // Stopping here causes race conditions when multiple tests share the static container
-        // await DatabaseTestModule.postgres?.stop();
+        // Container cleanup is handled by globalSetup teardown after all tests complete
     }
 }

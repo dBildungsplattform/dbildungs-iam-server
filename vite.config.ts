@@ -1,6 +1,6 @@
+import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { defineConfig } from 'vitest/config';
-import { readFileSync } from 'fs';
 
 try {
     readFileSync(resolve(__dirname, './.env'), 'utf-8')
@@ -23,6 +23,7 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'node',
+        globalSetup: './test/vitest.global-setup.ts',
         hookTimeout: 60000, // 1 minute for setup/teardown
         testTimeout: 30000, // 30 seconds default timeout
         onConsoleLog: process.env['CI'] ? () => false : undefined, // Suppress console logs in CI environment
