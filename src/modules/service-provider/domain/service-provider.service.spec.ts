@@ -778,7 +778,7 @@ describe('ServiceProviderService', () => {
 
                 permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
                 organisationRepo.findIdsByTypen.mockResolvedValueOnce(orgIds);
-                serviceProviderRepo.findBySchulstrukturknoten.mockResolvedValueOnce([sps, 1]);
+                serviceProviderRepo.findBySchulstrukturknotenPaginated.mockResolvedValueOnce([sps, 1]);
 
                 const result: Result<
                     Counted<ServiceProvider<true>>,
@@ -794,7 +794,12 @@ describe('ServiceProviderService', () => {
                     OrganisationsTyp.LAND,
                     OrganisationsTyp.ROOT,
                 ]);
-                expect(serviceProviderRepo.findBySchulstrukturknoten).toHaveBeenCalledWith(orgIds, undefined, 10, 0);
+                expect(serviceProviderRepo.findBySchulstrukturknotenPaginated).toHaveBeenCalledWith(
+                    orgIds,
+                    undefined,
+                    10,
+                    0,
+                );
             });
 
             it('should forward searchString, limit and offset to findBySchulstrukturknoten', async () => {
@@ -807,11 +812,11 @@ describe('ServiceProviderService', () => {
 
                 permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
                 organisationRepo.findIdsByTypen.mockResolvedValueOnce(orgIds);
-                serviceProviderRepo.findBySchulstrukturknoten.mockResolvedValueOnce([sps, 1]);
+                serviceProviderRepo.findBySchulstrukturknotenPaginated.mockResolvedValueOnce([sps, 1]);
 
                 await service.findManageableLandRoot(permissions, searchString, limit, offset);
 
-                expect(serviceProviderRepo.findBySchulstrukturknoten).toHaveBeenCalledWith(
+                expect(serviceProviderRepo.findBySchulstrukturknotenPaginated).toHaveBeenCalledWith(
                     orgIds,
                     searchString,
                     limit,
@@ -824,7 +829,7 @@ describe('ServiceProviderService', () => {
 
                 permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
                 organisationRepo.findIdsByTypen.mockResolvedValueOnce([]);
-                serviceProviderRepo.findBySchulstrukturknoten.mockResolvedValueOnce([[], 0]);
+                serviceProviderRepo.findBySchulstrukturknotenPaginated.mockResolvedValueOnce([[], 0]);
 
                 const result: Result<
                     Counted<ServiceProvider<true>>,
@@ -834,7 +839,7 @@ describe('ServiceProviderService', () => {
                 expectOkResult(result);
                 expect(result.value[0]).toHaveLength(0);
                 expect(result.value[1]).toBe(0);
-                expect(serviceProviderRepo.findBySchulstrukturknoten).toHaveBeenCalledWith(
+                expect(serviceProviderRepo.findBySchulstrukturknotenPaginated).toHaveBeenCalledWith(
                     [],
                     undefined,
                     undefined,
@@ -856,7 +861,7 @@ describe('ServiceProviderService', () => {
 
                 expectErrResult(result);
                 expect(organisationRepo.findIdsByTypen).not.toHaveBeenCalled();
-                expect(serviceProviderRepo.findBySchulstrukturknoten).not.toHaveBeenCalled();
+                expect(serviceProviderRepo.findBySchulstrukturknotenPaginated).not.toHaveBeenCalled();
             });
         });
     });
