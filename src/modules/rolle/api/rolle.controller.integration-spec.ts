@@ -2013,4 +2013,68 @@ describe('Rolle API', () => {
             });
         });
     });
+
+    describe('GET rolle/for-personenkontext-creation', () => {
+        it('should return available rollen for personenkontext creation', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/for-personenkontext-creation`)
+                .query({ organisationId: organisation.id })
+                .send();
+
+            console.log(organisation.id, rolle.id); // Debugging line
+            console.log(JSON.stringify(response.body, null, 2)); // Debugging line
+
+            expect(response.status).toBe(200);
+            expect(response.body.total).toBe(1);
+            expect(response.body.items).toHaveLength(1);
+            expect(response.body.items[0].id).toBe(rolle.id);
+        });
+
+        it('should return 404 if user is missing permissions', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/for-personenkontext-creation`)
+                .query({ organisationId: organisation.id })
+                .send();
+
+            console.log(JSON.stringify(response.body, null, 2)); // Debugging line
+
+            expect(response.status).toBe(400);
+        });
+
+        it('should return 400 if organisationId is missing', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/for-personenkontext-creation`)
+                .send();
+
+            expect(response.status).toBe(400);
+        });
+    });
 });
