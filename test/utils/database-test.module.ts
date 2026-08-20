@@ -1,13 +1,13 @@
 import { MikroORM } from '@mikro-orm/core';
+import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 import { Migrator, TSMigrationGenerator } from '@mikro-orm/migrations';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig, PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
+import { DynamicModule, Inject, OnModuleDestroy, Optional } from '@nestjs/common';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { randomInt, randomUUID } from 'crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { PullPolicy } from 'testcontainers';
 import { DbConfig } from '../../src/shared/config/index.js';
-import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 
 type DatabaseTestModuleOptions = {
     isDatabaseRequired?: boolean;
@@ -16,6 +16,11 @@ type DatabaseTestModuleOptions = {
 
 export class DatabaseTestModule implements OnModuleDestroy {
     private static postgres: Option<StartedPostgreSqlContainer>;
+
+    public static async stopContainer(): Promise<void> {
+        await DatabaseTestModule.postgres?.stop();
+        DatabaseTestModule.postgres = undefined;
+    }
 
     public static forRoot(options?: DatabaseTestModuleOptions): DynamicModule {
         return {
@@ -78,12 +83,12 @@ export class DatabaseTestModule implements OnModuleDestroy {
         await Promise.all([orm.schema.clear(), orm.schema.clear({ schema: 'email' })]);
     }
 
-    public constructor(private orm?: MikroORM) {}
+    public constructor(@Optional() @Inject(MikroORM) private orm?: MikroORM) {}
 
     public async onModuleDestroy(): Promise<void> {
-        if (this.orm) {
+        if (this.orm?.isConnected()) {
             await this.orm.close();
         }
-        await DatabaseTestModule.postgres?.stop();
+        // Container cleanup is handled by globalSetup teardown after all tests complete
     }
 }
