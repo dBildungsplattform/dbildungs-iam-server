@@ -22,7 +22,7 @@ export class EmailHealthController {
     @HealthCheck()
     public check(): Promise<HealthCheckResult> {
         return this.health.check([
-            (): Promise<HealthIndicatorResult> => this.mikroOrm.pingCheck('database', { timeout: 1500 }),
+            (): Promise<HealthIndicatorResult> => this.mikroOrm.pingCheck('database', { timeout: 15000 }),
         ]);
     }
 }
