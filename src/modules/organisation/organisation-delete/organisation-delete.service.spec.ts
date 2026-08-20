@@ -77,7 +77,7 @@ describe('OrganisationDeleteService', () => {
                 .mockResolvedValueOnce([[], 0]); // zugehoerige orgs
             rolleRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             personenkontextRepo.findBy.mockResolvedValue([[], 0]);
-            serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([[], 0]);
+            serviceProviderRepoRepo.findBySchulstrukturknoten.mockResolvedValue([]);
             rollenerweiterungRepo.findManyByOrganisationId.mockResolvedValue([]);
 
             const organisationId: OrganisationID = faker.string.uuid();
