@@ -777,7 +777,9 @@ describe('ServiceProviderRepo', () => {
 
             expect(count).toBe(2);
             const resultIds: string[] = results.map((sp: ServiceProvider<true>) => sp.id);
-            expect(resultIds).toEqual(expect.arrayContaining([serviceProviderAlphaOrgA.id, serviceProviderBetaOrgA.id]));
+            expect(resultIds).toEqual(
+                expect.arrayContaining([serviceProviderAlphaOrgA.id, serviceProviderBetaOrgA.id]),
+            );
             expect(resultIds).not.toContain(serviceProviderGammaOrgB.id);
         });
 
