@@ -450,7 +450,7 @@ export class RolleController {
         @Query() queryParams: FindRollenerweiterungQueryParams,
         @Permissions() permissions: IPersonPermissions,
     ): Promise<ServiceProviderResponse[]> {
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(params.rolleId);
+        const rolle: Rolle<true> | null | undefined = await this.rolleRepo.findById(params.rolleId);
         if (!rolle) {
             throw new EntityNotFoundError('Rolle', params.rolleId);
         }
