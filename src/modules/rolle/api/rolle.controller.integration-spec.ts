@@ -1659,6 +1659,7 @@ describe('Rolle API', () => {
                 .send();
 
             expect(response.status).toBe(200);
+            expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith([RollenSystemRecht.ROLLEN_ERWEITERN]);
             const serviceProviderResponse: ServiceProviderResponse[] = response.body as ServiceProviderResponse[];
             expect(serviceProviderResponse).toHaveLength(2);
         });
