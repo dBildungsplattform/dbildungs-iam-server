@@ -1,4 +1,4 @@
-import { Loaded, Subquery } from '@mikro-orm/core';
+import { FilterQuery, Loaded, Subquery } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -15,6 +15,7 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import { ManageableServiceProviderFilter } from '../domain/types.js';
 import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 import { ServiceProviderRollenartWhitelistEntity } from './service-provider-rollenart-whitelist.entity.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
@@ -222,16 +223,25 @@ export class ServiceProviderRepo {
 
     public async findByOrganisationsWithMerkmale(
         orgaIds: OrganisationID[] | 'all',
-        limit?: number,
-        offset?: number,
+        filter?: ManageableServiceProviderFilter,
     ): Promise<Counted<ServiceProvider<true>>> {
+        const where: FilterQuery<ServiceProviderEntity> = {};
+
+        if (orgaIds !== 'all') {
+            where.providedOnSchulstrukturknoten = { $in: orgaIds };
+        }
+
+        if (filter?.kategorien && filter.kategorien.length > 0) {
+            where.kategorie = { $in: filter.kategorien };
+        }
+
         const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
             ServiceProviderEntity,
-            orgaIds === 'all' ? {} : { providedOnSchulstrukturknoten: { $in: orgaIds } },
+            where,
             {
                 populate: ['merkmale', 'rollenartenWhitelist'],
-                limit,
-                offset,
+                limit: filter?.limit,
+                offset: filter?.offset,
                 orderBy: { kategorie: 'ASC' },
             },
         );

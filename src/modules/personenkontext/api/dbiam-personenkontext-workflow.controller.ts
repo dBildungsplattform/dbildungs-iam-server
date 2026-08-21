@@ -52,6 +52,8 @@ import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update
 import { DBiamPersonResponse } from './response/dbiam-person.response.js';
 import { PersonenkontextWorkflowResponse } from './response/dbiam-personenkontext-workflow-response.js';
 import { PersonenkontexteUpdateResponse } from './response/personenkontexte-update.response.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 
 @UseFilters(new PersonenkontextExceptionFilter(), new PersonenkontexteUpdateExceptionFilter())
 @ApiTags('personenkontext')
@@ -62,6 +64,7 @@ export class DbiamPersonenkontextWorkflowController {
     public constructor(
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly logger: ClassLogger,
     ) {}
 
@@ -96,6 +99,19 @@ export class DbiamPersonenkontextWorkflowController {
             params.limit,
         );
 
+        if (params.personId) {
+            const findByPersonResult: Result<Personenkontext<true>[], MissingPermissionsError> =
+                await this.personenkontextRepo.findByPersonAuthorized(params.personId, permissions);
+            if (!findByPersonResult.ok) {
+                return new PersonenkontextWorkflowResponse(
+                    organisations.map(
+                        (organisation: Organisation<true>) => new OrganisationResponseLegacy(organisation),
+                    ),
+                    false,
+                    params.organisationId,
+                );
+            }
+        }
         const organisationsResponse: OrganisationResponseLegacy[] = organisations.map(
             (org: Organisation<true>) => new OrganisationResponseLegacy(org),
         );

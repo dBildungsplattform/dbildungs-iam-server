@@ -27,12 +27,16 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.factory.js';
 import { PersonenkontextWorkflowSharedKernel } from '../domain/personenkontext-workflow-shared-kernel.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { Err } from '../../../shared/util/result.js';
+import { Person } from '../../person/domain/person.js';
 
 describe('DbiamPersonenkontextWorkflowController Test', () => {
     let module: TestingModule;
     let sut: DbiamPersonenkontextWorkflowController;
     let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
     let personenkontextWorkflowFactoryMock: DeepMocked<PersonenkontextWorkflowFactory>;
+    let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -74,6 +78,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
 
         personenkontextWorkflowMock = module.get(PersonenkontextWorkflowAggregate);
         personenkontextWorkflowFactoryMock = module.get(PersonenkontextWorkflowFactory);
+        personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
     });
 
     afterAll(async () => {
@@ -208,6 +213,33 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
 
                     expect(response).toBeInstanceOf(PersonenkontextWorkflowResponse);
+                });
+
+                it('should return orgas, but no rollen when admin can not modify person', async () => {
+                    const person: Person<true> = DoFactory.createPerson(true);
+                    const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                        name: faker.company.name(),
+                    });
+                    const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+
+                    personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
+                    personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
+                    personenkontextRepoMock.findByPersonAuthorized.mockResolvedValueOnce(
+                        Err(new MissingPermissionsError('not authorized')),
+                    );
+
+                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
+                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    Object.assign(params, {
+                        operationContext,
+                        organisationId: organisation.id,
+                        personId: person.id,
+                    });
+
+                    const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
+
+                    expect(response).toBeInstanceOf(PersonenkontextWorkflowResponse);
+                    expect(response.canCommit).toBe(false);
                 });
             },
         );
