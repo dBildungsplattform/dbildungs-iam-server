@@ -58,6 +58,14 @@ interface FindRollenForPersonenImportParams {
     offset?: number;
 }
 
+type FindRollenAvailableForErweiterungParams = FindRollenWithPermissionsParams & {
+    requestedSystemrechte?: RollenSystemRecht[];
+};
+
+type FindRollenAvailableForPersonAdministrationParams = FindRollenWithPermissionsParams & {
+    requestedSystemrechte?: RollenSystemRecht[];
+};
+
 @Injectable()
 export class RolleFindService {
     public constructor(
@@ -67,12 +75,15 @@ export class RolleFindService {
     ) {}
 
     public async findRollenAvailableForErweiterung(
-        params: FindRollenWithPermissionsParams & { requestedSystemrechte?: RollenSystemRecht[] },
+        params: FindRollenAvailableForErweiterungParams,
     ): Promise<Counted<Rolle<true>>> {
         const permittedOrgas: PermittedOrgas = await params.permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.ROLLEN_ERWEITERN],
+            params.requestedSystemrechte ?? [RollenSystemRecht.ROLLEN_ERWEITERN],
             true,
         );
+        const wantsMptRollen: boolean =
+            params.requestedSystemrechte?.includes(RollenSystemRecht.MPT_ROLLEN_VERWALTEN) ?? false;
+
         const organisationBounds: OrganisationBounds = await this.resolveOrganisationBounds(
             permittedOrgas,
             params.organisationIds,
@@ -83,9 +94,6 @@ export class RolleFindService {
             limit: params.limit,
             offset: params.offset,
         };
-
-        const wantsMptRollen: boolean =
-            params.requestedSystemrechte?.includes(RollenSystemRecht.MPT_ROLLEN_VERWALTEN) ?? false;
 
         switch (organisationBounds.kind) {
             case 'bounded':
@@ -196,10 +204,11 @@ export class RolleFindService {
     }
 
     public async findRollenAvailableForPersonAdministration(
-        params: FindRollenWithPermissionsParams,
+        params: FindRollenAvailableForPersonAdministrationParams,
     ): Promise<Counted<Rolle<true>>> {
         const permittedOrgas: PermittedOrgas = await params.permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            params.requestedSystemrechte ?? [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
             true,
         );
 
@@ -208,6 +217,9 @@ export class RolleFindService {
             limit: params.limit,
             offset: params.offset,
         };
+
+        const wantsMptRollen: boolean =
+            params.requestedSystemrechte?.includes(RollenSystemRecht.MPT_ROLLEN_VERWALTEN) ?? false;
 
         const organisationBounds: OrganisationBounds = await this.resolveOrganisationBounds(
             permittedOrgas,
@@ -219,9 +231,22 @@ export class RolleFindService {
                 queryParams.rollenArten = await this.resolveAllowedRollenArten(
                     organisationBounds.selectedAndPermittedOrgas,
                 );
+                if (
+                    !(
+                        wantsMptRollen &&
+                        (await this.hasMPTRollenVerwaltenPermission(
+                            params.permissions,
+                            organisationBounds.selectedAndPermittedOrgas,
+                        ))
+                    )
+                ) {
+                    queryParams.excludeMerkmale = [RollenMerkmal.MPT_ROLLE];
+                }
                 break;
             case 'unbouded':
-                // no filtering needed
+                if (!wantsMptRollen) {
+                    queryParams.excludeMerkmale = [RollenMerkmal.MPT_ROLLE];
+                }
                 break;
             case 'empty':
                 return [[], 0];

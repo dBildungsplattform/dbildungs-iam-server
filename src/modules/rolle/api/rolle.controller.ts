@@ -243,6 +243,9 @@ export class RolleController {
                 organisationIds: queryParams.organisationIds,
                 limit: queryParams.limit,
                 offset: queryParams.offset,
+                requestedSystemrechte: queryParams.systemrechte?.map((systemrecht: RollenSystemRechtEnum) =>
+                    RollenSystemRecht.getByName(systemrecht),
+                ),
             });
 
         return new PagedResponse<RolleResponse>({

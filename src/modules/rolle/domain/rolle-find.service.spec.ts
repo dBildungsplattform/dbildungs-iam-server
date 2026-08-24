@@ -16,7 +16,7 @@ import { FindRollenWithPermissionsParams, RolleFindService } from './rolle-find.
 import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
-import { RollenSystemRecht } from './systemrecht.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from './systemrecht.js';
 
 type RolleFindServiceTestAccess = {
     getOrganisationIdsWithParents(organisationIds: OrganisationID[]): Promise<OrganisationID[]>;
@@ -28,6 +28,7 @@ function getValidationObjectForPersonAdministrationFindByParams(params: {
     offset?: number;
     expectedOrganisationIds?: Array<OrganisationID>;
     expectedRollenArten?: Array<RollenArt>;
+    expectedExcludeMerkmale?: Array<RollenMerkmal>;
 }): Partial<RolleFindByParameters> {
     const validatorObject: Partial<RolleFindByParameters> = {
         searchStr: params.searchStr,
@@ -43,6 +44,11 @@ function getValidationObjectForPersonAdministrationFindByParams(params: {
         validatorObject.allowedOrganisationIds = expect.arrayContaining(
             params.expectedOrganisationIds,
         ) as typeof params.expectedOrganisationIds;
+    }
+    if (params.expectedExcludeMerkmale) {
+        validatorObject.excludeMerkmale = expect.arrayContaining(
+            params.expectedExcludeMerkmale,
+        ) as typeof params.expectedExcludeMerkmale;
     }
     return validatorObject;
 }
@@ -777,6 +783,7 @@ describe('RolleFindService', () => {
                                 getValidationObjectForPersonAdministrationFindByParams({
                                     searchStr,
                                     limit,
+                                    expectedExcludeMerkmale: [RollenMerkmal.MPT_ROLLE],
                                 }),
                             );
                         });
@@ -819,6 +826,7 @@ describe('RolleFindService', () => {
                                                 ),
                                             ),
                                             expectedOrganisationIds: [organisation.id, parent.id],
+                                            expectedExcludeMerkmale: [RollenMerkmal.MPT_ROLLE],
                                         }),
                                     );
                                 });
@@ -869,6 +877,7 @@ describe('RolleFindService', () => {
                                             ...schulen.map((s: Organisation<true>) => s.id),
                                             traeger.id,
                                         ],
+                                        expectedExcludeMerkmale: [RollenMerkmal.MPT_ROLLE],
                                     }),
                                 );
                             });
@@ -889,9 +898,77 @@ describe('RolleFindService', () => {
                                         limit,
                                         expectedRollenArten: [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
                                         expectedOrganisationIds: [...organisationIds, traeger.id],
+                                        expectedExcludeMerkmale: [RollenMerkmal.MPT_ROLLE],
                                     }),
                                 );
                             });
+                        });
+                    });
+                });
+
+                describe.each([
+                    [`when user has ${RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN}`, true],
+                    [`when user does not have ${RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN}`, false],
+                ])('%s', (_title: string, hasPermission: boolean) => {
+                    let requestedSystemrechte: RollenSystemRecht[];
+                    let hasMptPermission: boolean;
+
+                    const shouldExcludeMptRollen: () => boolean = () =>
+                        !(hasMptPermission && requestedSystemrechte.includes(RollenSystemRecht.MPT_ROLLEN_VERWALTEN));
+
+                    const expectPersonAdministrationQueryWithExpectedMptFiltering: () => void = () => {
+                        expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+                            getValidationObjectForPersonAdministrationFindByParams({
+                                expectedOrganisationIds: [...schulen.map((o: Organisation<true>) => o.id), traeger.id],
+                                expectedRollenArten: [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN],
+                                expectedExcludeMerkmale: shouldExcludeMptRollen()
+                                    ? [RollenMerkmal.MPT_ROLLE]
+                                    : undefined,
+                            }),
+                        );
+                    };
+
+                    const runPersonAdministrationQuery: () => Promise<void> = async () => {
+                        await rolleFindService.findRollenAvailableForPersonAdministration({
+                            permissions: permissionsMock,
+                            requestedSystemrechte,
+                        });
+                    };
+
+                    beforeEach(() => {
+                        hasMptPermission = hasPermission;
+                        requestedSystemrechte = [
+                            RollenSystemRecht.PERSONEN_VERWALTEN,
+                            RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
+                        ];
+                        permissionsMock.hasSystemrechtAtOrganisation.mockImplementation(
+                            (requestedOrganisation: OrganisationID, systemrecht: RollenSystemRecht) => {
+                                return Promise.resolve(
+                                    hasPermission &&
+                                        schulen.some(
+                                            (schule: Organisation<true>) => schule.id === requestedOrganisation,
+                                        ) &&
+                                        systemrecht === RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
+                                );
+                            },
+                        );
+                    });
+
+                    describe('when user requests MPT rollen', () => {
+                        it(hasPermission ? 'should return MPT rollen' : 'should not return MPT rollen', async () => {
+                            await runPersonAdministrationQuery();
+                            expectPersonAdministrationQueryWithExpectedMptFiltering();
+                        });
+                    });
+
+                    describe('when user does not request MPT rollen', () => {
+                        beforeEach(() => {
+                            requestedSystemrechte = [RollenSystemRecht.PERSONEN_VERWALTEN];
+                        });
+
+                        it('should not return MPT rollen', async () => {
+                            await runPersonAdministrationQuery();
+                            expectPersonAdministrationQueryWithExpectedMptFiltering();
                         });
                     });
                 });

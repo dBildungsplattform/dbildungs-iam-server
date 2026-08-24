@@ -253,6 +253,63 @@ describe('Rolle API', () => {
                     }),
                 );
             });
+
+            it('should return MPT rolle, if requested and permitted', async () => {
+                const mptRolle: Rolle<true> = await rolleRepo.create(
+                    DoFactory.createRolle(false, { rollenart: RollenArt.SORGBER, merkmale: [RollenMerkmal.MPT_ROLLE] }),
+                );
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockImplementation(
+                    (systemrechte: RollenSystemRecht[]) =>
+                        Promise.resolve(systemrechte.includes(RollenSystemRecht.MPT_ROLLEN_VERWALTEN)),
+                );
+                query = {
+                    ...query,
+                    systemrechte: [
+                        RollenSystemRechtEnum.PERSONEN_VERWALTEN,
+                        RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN,
+                    ],
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(query)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        items: expect.arrayContaining([expect.objectContaining({ id: mptRolle.id })]),
+                        total: 3,
+                        offset: 0,
+                        limit: 25,
+                    }),
+                );
+            });
+
+            it('should not return MPT rolle, if not requested', async () => {
+                const mptRolle: Rolle<true> = await rolleRepo.create(
+                    DoFactory.createRolle(false, { rollenart: RollenArt.SORGBER, merkmale: [RollenMerkmal.MPT_ROLLE] }),
+                );
+                query = {
+                    ...query,
+                    systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(query)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        items: expect.not.arrayContaining([expect.objectContaining({ id: mptRolle.id })]),
+                        total: 2,
+                        offset: 0,
+                        limit: 25,
+                    }),
+                );
+            });
         });
 
         describe('when user is traegeradmin', () => {
