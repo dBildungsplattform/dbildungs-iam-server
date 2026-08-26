@@ -24,6 +24,7 @@ import { ServiceProviderSystem } from '../../service-provider/domain/service-pro
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
 import { NewOxParams, OldOxParams, OxParams } from '../api/externaldata/user-externaldata-ox.response.js';
+import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -46,7 +47,7 @@ export class UserExternaldataWorkflowAggregate {
 
     public singleRollenart?: RollenArt;
 
-    public uniqDienststellenNummern?: string[];
+    public polytheaDienststellenNummern?: string[];
 
     public oxParams?: OxParams;
 
@@ -129,10 +130,25 @@ export class UserExternaldataWorkflowAggregate {
         }
         this.singleRollenart = uniqueRollenarten.length === 1 ? uniqueRollenarten[0] : undefined;
 
-        this.uniqDienststellenNummern = this.computeUniqDienststellenNummern(this.checkedExternalPkData);
+        this.polytheaDienststellenNummern = this.computePolytheaDienststellenNummern(this.checkedExternalPkData);
+
         this.oxParams = this.computeOxParams(this.mergedExternalPkData, this.oxLoginId, this.person);
 
         return undefined;
+    }
+
+    private computePolytheaDienststellenNummern(checkedExternalPkData: ExternalPkData[]): string[] {
+        return checkedExternalPkData
+            .filter(
+                (pk: ExternalPkData) =>
+                    pk.serviceProvider &&
+                    pk.serviceProvider.some(
+                        // FIX implement better solution to check if the ServiceProvider is a Polythea ServiceProvider
+                        (sp: ServiceProvider<true>) => sp.id === 'b2478ade-f0d1-4864-9713-a12c95cde898',
+                    ),
+            )
+            .map((pk: ExternalPkData) => pk.kennung)
+            .filter((kennung: string | undefined): kennung is string => kennung !== undefined);
     }
 
     // Filtering out !expk.kennung || !expk.rollenart automatically leads to only valid organisations of type SCHOOLS are included

@@ -68,7 +68,7 @@ export class KeycloakInternalController {
             checkedExternalPkData: workflow.checkedExternalPkData,
             vidisDienststellennummern: workflow.vidisDienststellennummern,
             singleRollenart: workflow.singleRollenart,
-            uniqDienststellenNummern: workflow.uniqDienststellenNummern,
+            polytheaDienststellenNummern: workflow.polytheaDienststellenNummern,
             email: workflow.email,
             oxParams: workflow.oxParams,
         });
@@ -95,7 +95,7 @@ export class KeycloakInternalController {
             !workflow.mergedExternalPkData ||
             !workflow.externalPkDataWithVidisAngebotId ||
             !workflow.vidisDienststellennummern ||
-            !workflow.uniqDienststellenNummern
+            !workflow.polytheaDienststellenNummern
         ) {
             throw new UserExternalDataWorkflowError(
                 'UserExternaldataWorkflowAggregate has not been successfully initialized',

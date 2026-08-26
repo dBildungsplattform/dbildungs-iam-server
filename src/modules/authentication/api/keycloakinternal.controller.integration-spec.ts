@@ -506,7 +506,7 @@ describe('KeycloakInternalController', () => {
             workflowMock.mergedExternalPkData = undefined;
             workflowMock.externalPkDataWithVidisAngebotId = undefined;
             workflowMock.vidisDienststellennummern = undefined;
-            workflowMock.uniqDienststellenNummern = undefined;
+            workflowMock.polytheaDienststellenNummern = undefined;
 
             const workflowFactoryMock: DeepMocked<UserExternaldataWorkflowFactory> =
                 createMock<UserExternaldataWorkflowFactory>(UserExternaldataWorkflowFactory);
