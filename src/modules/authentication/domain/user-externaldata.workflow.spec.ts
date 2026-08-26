@@ -23,7 +23,7 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RequiredExternalPkData } from '../api/keycloakinternal.controller.js';
-import { UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
+import { POLYTHEA_SERVICE_PROVIDER_ID, UserExternaldataWorkflowAggregate } from './user-extenaldata.workflow.js';
 
 const createRequiredExternalPkData = (props?: Partial<RequiredExternalPkData>): RequiredExternalPkData => {
     return {
@@ -697,8 +697,6 @@ describe('UserExternaldataWorkflow', () => {
     });
 
     describe('polytheaDienststellenNummern', () => {
-        const polytheaServiceProviderId: string = 'b2478ade-f0d1-4864-9713-a12c95cde898';
-
         const setup = (): { person: Person<true> } => {
             const person: Person<true> = DoFactory.createPerson(true);
             emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
@@ -713,7 +711,7 @@ describe('UserExternaldataWorkflow', () => {
                     kennung: 'poly-kennung',
                     serviceProvider: [
                         DoFactory.createServiceProvider(true, {
-                            id: polytheaServiceProviderId,
+                            id: POLYTHEA_SERVICE_PROVIDER_ID,
                         }),
                     ],
                 }),
@@ -767,7 +765,7 @@ describe('UserExternaldataWorkflow', () => {
                     kennung: undefined,
                     serviceProvider: [
                         DoFactory.createServiceProvider(true, {
-                            id: polytheaServiceProviderId,
+                            id: POLYTHEA_SERVICE_PROVIDER_ID,
                         }),
                     ],
                 },
@@ -778,7 +776,7 @@ describe('UserExternaldataWorkflow', () => {
                     kennung: 'poly-kennung',
                     serviceProvider: [
                         DoFactory.createServiceProvider(true, {
-                            id: polytheaServiceProviderId,
+                            id: POLYTHEA_SERVICE_PROVIDER_ID,
                         }),
                     ],
                 },
