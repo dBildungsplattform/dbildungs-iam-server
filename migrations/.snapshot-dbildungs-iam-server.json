@@ -3816,6 +3816,17 @@
       "indexes": [
         {
           "columnNames": [
+            "name"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "service_provider_name_trgm_index",
+          "primary": false,
+          "unique": false,
+          "expression": "create index \"service_provider_name_trgm_index\" on \"public\".\"service_provider\" using gin (\"name\" gin_trgm_ops);"
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,

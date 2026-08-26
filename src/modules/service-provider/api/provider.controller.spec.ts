@@ -665,6 +665,7 @@ describe('Provider Controller Test', () => {
 
                 expect(serviceProviderServiceMock.findAuthorized).toHaveBeenCalledWith(personPermissionsMock, {
                     kategorien: [kategorie],
+                    searchFilter: undefined,
                     limit: 10,
                     offset: 0,
                 });
