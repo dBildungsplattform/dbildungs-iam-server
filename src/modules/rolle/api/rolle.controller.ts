@@ -65,7 +65,6 @@ import { FindRollenerweiterungQueryParams } from './find-rollenerweiterung-query
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { ApplyRollenerweiterungChangesBodyParams } from './apply-rollenerweiterung-changes.body.params.js';
 import { ApplyRollenerweiterungForRollePathParams } from './apply-rollenerweiterung-for-rolle-changes.path.params.js';
-import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { ApplyRollenerweiterungForRolleService } from '../domain/apply-rollenerweiterungen-for-rolle-service.js';
 import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
 import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
@@ -450,34 +449,23 @@ export class RolleController {
         @Query() queryParams: FindRollenerweiterungQueryParams,
         @Permissions() permissions: IPersonPermissions,
     ): Promise<ServiceProviderResponse[]> {
+        const isAuthorized: boolean = await permissions.hasSystemrechtAtOrganisation(
+            queryParams.organisationId,
+            RollenSystemRecht.getByName(RollenSystemRechtEnum.ROLLEN_ERWEITERN),
+        );
+        if (!isAuthorized) {
+            throw new EntityNotFoundError('Rolle', params.rolleId);
+        }
+
         const rolle: Rolle<true> | null | undefined = await this.rolleRepo.findById(params.rolleId);
         if (!rolle) {
             throw new EntityNotFoundError('Rolle', params.rolleId);
         }
-        const permittedOrgaIds: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht([
-            RollenSystemRecht.getByName(RollenSystemRechtEnum.ROLLEN_ERWEITERN),
-        ]);
-        if (
-            queryParams.organisationId &&
-            !permittedOrgaIds.all &&
-            !permittedOrgaIds.orgaIds.includes(queryParams.organisationId)
-        ) {
-            throw new EntityNotFoundError('Rolle', params.rolleId);
-        }
 
-        let rollenerweiterungen: Rollenerweiterung<true>[];
-        if (!queryParams.organisationId) {
-            rollenerweiterungen = await this.rollenerweiterungRepo.findManyByRolleId(params.rolleId);
-        } else {
-            rollenerweiterungen = await this.rollenerweiterungRepo.findManyByOrganisationAndRolle([
+        const rollenerweiterungen: Rollenerweiterung<true>[] =
+            await this.rollenerweiterungRepo.findManyByOrganisationAndRolle([
                 { organisationId: queryParams.organisationId, rolleId: params.rolleId },
             ]);
-        }
-        if (!permittedOrgaIds.all) {
-            rollenerweiterungen = rollenerweiterungen.filter((re: Rollenerweiterung<true>) =>
-                permittedOrgaIds.orgaIds.includes(re.organisationId),
-            );
-        }
 
         const serviceProviders: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
             rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.serviceProviderId),
