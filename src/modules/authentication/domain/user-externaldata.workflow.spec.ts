@@ -695,4 +695,102 @@ describe('UserExternaldataWorkflow', () => {
             expect(sut.checkedExternalPkData).toHaveLength(1);
         });
     });
+
+    describe('polytheaDienststellenNummern', () => {
+        const polytheaServiceProviderId: string = 'b2478ade-f0d1-4864-9713-a12c95cde898';
+
+        const setup = (): { person: Person<true> } => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            emailResolverServiceMock.shouldUseEmailMicroservice.mockReturnValue(false);
+
+            return { person };
+        };
+
+        it('should include kennung when pk has Polythea service provider', async () => {
+            const { person }: { person: Person<true> } = setup();
+            const externalPkData: RequiredExternalPkData[] = [
+                createRequiredExternalPkData({
+                    kennung: 'poly-kennung',
+                    serviceProvider: [
+                        DoFactory.createServiceProvider(true, {
+                            id: polytheaServiceProviderId,
+                        }),
+                    ],
+                }),
+                createRequiredExternalPkData({
+                    kennung: 'non-poly-kennung',
+                    serviceProvider: [
+                        DoFactory.createServiceProvider(true, {
+                            id: faker.string.uuid(),
+                        }),
+                    ],
+                }),
+            ];
+
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
+
+            await sut.initialize(person.id);
+
+            expect(sut.polytheaDienststellenNummern).toEqual(['poly-kennung']);
+        });
+
+        it('should return empty list when no Polythea service provider is present', async () => {
+            const { person }: { person: Person<true> } = setup();
+            const externalPkData: RequiredExternalPkData[] = [
+                createRequiredExternalPkData({
+                    kennung: 'kennung-1',
+                    serviceProvider: [
+                        DoFactory.createServiceProvider(true, {
+                            id: faker.string.uuid(),
+                        }),
+                    ],
+                }),
+            ];
+
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            dBiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(externalPkData);
+            dBiamPersonenkontextRepoMock.findErweiterteSPByPersonId.mockResolvedValueOnce([]);
+
+            await sut.initialize(person.id);
+
+            expect(sut.polytheaDienststellenNummern).toEqual([]);
+        });
+
+        it('should filter out undefined kennung values in private method result', () => {
+            const polytheaPkData: ExternalPkData[] = [
+                {
+                    pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
+                    kennung: undefined,
+                    serviceProvider: [
+                        DoFactory.createServiceProvider(true, {
+                            id: polytheaServiceProviderId,
+                        }),
+                    ],
+                },
+                {
+                    pkId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
+                    rollenart: RollenArt.LEHR,
+                    kennung: 'poly-kennung',
+                    serviceProvider: [
+                        DoFactory.createServiceProvider(true, {
+                            id: polytheaServiceProviderId,
+                        }),
+                    ],
+                },
+            ];
+
+            const result: string[] = (
+                sut as unknown as {
+                    computePolytheaDienststellenNummern: (checkedExternalPkData: ExternalPkData[]) => string[];
+                }
+            ).computePolytheaDienststellenNummern(polytheaPkData);
+
+            expect(result).toEqual(['poly-kennung']);
+        });
+    });
 });
