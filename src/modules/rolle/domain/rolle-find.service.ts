@@ -271,6 +271,62 @@ export class RolleFindService {
         return [allowedRollenarten, allowedRollenartenForMPTRollen];
     }
 
+    public async findMptRollenAuthorized(
+        permissions: IPersonPermissions,
+        includeTechnische: boolean,
+        searchStr?: string,
+        limit?: number,
+        offset?: number,
+        organisationIds?: OrganisationID[],
+        rolleIds?: RolleID[],
+    ): Promise<Counted<Rolle<true>>> {
+        const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.MPT_ROLLEN_VERWALTEN],
+            true,
+        );
+
+        // Narrow the requested organisation IDs using the allowed organisations
+        let filteredRequestedOrgaIds: OrganisationID[] | undefined;
+        if (organisationIds && organisationIds.length > 0) {
+            filteredRequestedOrgaIds = intersectPermittedAndRequestedOrgas(orgIdsWithRecht, organisationIds);
+        } else if (!orgIdsWithRecht.all) {
+            filteredRequestedOrgaIds = orgIdsWithRecht.orgaIds;
+        }
+
+        if (filteredRequestedOrgaIds && filteredRequestedOrgaIds.length === 0) {
+            return [[], 0];
+        }
+
+        let allowedOrganisationIds: OrganisationID[] | undefined = filteredRequestedOrgaIds;
+        let rollenartFilter: RollenArt[] | undefined;
+        if (filteredRequestedOrgaIds) {
+            const [orgaTypes, orgaIdsWithParents]: [OrganisationsTyp[], OrganisationID[]] = await Promise.all([
+                this.organisationRepository.findDistinctOrganisationsTypen(filteredRequestedOrgaIds),
+                this.getOrganisationIdsWithParents(filteredRequestedOrgaIds),
+            ]);
+
+            // Get organisations to create rollenart filter
+            rollenartFilter = Array.from(
+                OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationTypes(orgaTypes),
+            );
+
+            // Set allowed orgas
+            allowedOrganisationIds = orgaIdsWithParents;
+        }
+
+        return this.rolleRepo.findBy({
+            includeTechnische,
+            searchStr,
+            limit,
+            offset,
+            allowedOrganisationIds,
+            rolleIds,
+            requireMerkmale: [RollenMerkmal.MPT_ROLLE],
+            orderByRollenArtAndName: true,
+            rollenArten: rollenartFilter,
+        });
+    }
+
     private async getOrganisationIdsWithParents(organisationIds: OrganisationID[]): Promise<OrganisationID[]> {
         const organisationIdsWithParents: Set<OrganisationID> = new Set(organisationIds);
         const parents: Organisation<true>[] = await this.organisationRepository.findParentOrgasForIds(organisationIds);
