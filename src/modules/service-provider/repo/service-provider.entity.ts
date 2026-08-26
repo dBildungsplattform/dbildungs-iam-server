@@ -1,5 +1,5 @@
-import { BlobType, Collection, quote } from '@mikro-orm/core';
-import { Check, Entity, Enum, OneToMany, Property, Unique } from '@mikro-orm/decorators/legacy';
+import { BlobType, Collection, quote, SchemaTable } from '@mikro-orm/core';
+import { Check, Entity, Enum, Index, OneToMany, Property, Unique } from '@mikro-orm/decorators/legacy';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
     ServiceProviderKategorie,
@@ -20,6 +20,11 @@ import { ServiceProviderRollenartWhitelistEntity } from './service-provider-roll
     properties: ['providedOnSchulstrukturknoten', 'vidisAngebotId'],
 })
 export class ServiceProviderEntity extends TimestampedEntity {
+    @Index({
+        name: 'service_provider_name_trgm_index',
+        expression: (columns: Record<keyof ServiceProviderEntity, string>, table: SchemaTable, name: string) =>
+            quote`create index ${name} on ${table} using gin (${columns.name} gin_trgm_ops);`,
+    })
     @Property()
     public name!: string;
 
