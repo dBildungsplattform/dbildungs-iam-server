@@ -110,7 +110,9 @@ export class RolleController {
             rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
                 permissions,
                 searchStr: queryParams.searchStr,
-                organisationIds: queryParams.organisationContextForOperation ? [queryParams.organisationContextForOperation] : undefined,
+                organisationIds: queryParams.organisationContextForOperation
+                    ? [queryParams.organisationContextForOperation]
+                    : undefined,
                 rollenArten: queryParams.rollenarten,
                 limit: queryParams.limit,
                 offset: queryParams.offset,
