@@ -253,7 +253,7 @@ export class ServiceProviderRepo {
                 populate: ['merkmale', 'rollenartenWhitelist'],
                 limit: filter?.limit,
                 offset: filter?.offset,
-                orderBy: { kategorie: 'ASC' },
+                orderBy: { kategorie: 'ASC', name: 'ASC', id: 'ASC' },
             },
         );
 
