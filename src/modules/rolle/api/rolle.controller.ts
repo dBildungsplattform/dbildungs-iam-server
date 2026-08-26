@@ -122,7 +122,7 @@ export class RolleController {
                 queryParams.searchStr,
                 queryParams.limit,
                 queryParams.offset,
-                queryParams.organisationContextForOperation ? [queryParams.organisationContextForOperation] : undefined,
+                queryParams.organisationenForFilter,
                 queryParams.rolleIds,
             );
         } else if (
