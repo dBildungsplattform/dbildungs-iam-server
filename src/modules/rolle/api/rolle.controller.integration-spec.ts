@@ -2079,5 +2079,42 @@ describe('Rolle API', () => {
 
             expect(response.status).toBe(400);
         });
+
+        it('should use provided systemrecht for personenkontext creation', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+            if (rolle instanceof DomainError) {
+                throw Error();
+            }
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/for-personenkontext-creation`)
+                .query({
+                    organisationId: organisation.id,
+                    systemrecht: RollenSystemRechtEnum.PERSONEN_VERWALTEN,
+                })
+                .send();
+
+            expect(response.status).toBe(200);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            expect(response.body.total).toBe(1);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            expect(response.body.items).toHaveLength(1);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            expect(response.body.items[0].id).toBe(rolle.id);
+        });
     });
 });
