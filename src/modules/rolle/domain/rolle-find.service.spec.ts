@@ -544,7 +544,7 @@ describe('RolleFindService', () => {
                 allowedOrganisationIds: undefined,
                 rolleIds,
                 requireMerkmale: [RollenMerkmal.MPT_ROLLE],
-                orderByRollenArtAndName: true,
+                orderBy: 'artAndName',
             });
         });
 
@@ -603,7 +603,7 @@ describe('RolleFindService', () => {
                 allowedOrganisationIds: ['orga-1', 'parent-1'],
                 rolleIds,
                 requireMerkmale: [RollenMerkmal.MPT_ROLLE],
-                orderByRollenArtAndName: true,
+                orderBy: 'artAndName',
                 rollenArten: [
                     RollenArt.LEIT,
                     RollenArt.LEHR,
@@ -647,7 +647,7 @@ describe('RolleFindService', () => {
                 allowedOrganisationIds: ['orga-1', 'parent-1'],
                 rolleIds,
                 requireMerkmale: [RollenMerkmal.MPT_ROLLE],
-                orderByRollenArtAndName: true,
+                orderBy: 'artAndName',
                 rollenArten: [
                     RollenArt.LEIT,
                     RollenArt.LEHR,
@@ -691,7 +691,7 @@ describe('RolleFindService', () => {
                 allowedOrganisationIds: ['orga-2', 'parent-2'],
                 rolleIds,
                 requireMerkmale: [RollenMerkmal.MPT_ROLLE],
-                orderByRollenArtAndName: true,
+                orderBy: 'artAndName',
                 rollenArten: [
                     RollenArt.LEIT,
                     RollenArt.LEHR,
