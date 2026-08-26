@@ -508,7 +508,7 @@ describe('RolleFindService', () => {
             expect(result).toEqual([[], 0]);
         });
 
-        it('should use LIMITED_ROLLENART_ALLOWLIST from portal config', async () => {
+        it('should use limited rollenarten allowlist for restricted user creation', async () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
                 typ: OrganisationsTyp.SCHULE,
             });
@@ -526,7 +526,7 @@ describe('RolleFindService', () => {
 
             await rolleFindService.findRollenAvailableForPersonenkontextCreation({
                 permissions: permissionsMock,
-                systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN,
+                systemrecht: RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
                 organisationId: organisation.id,
             });
 
