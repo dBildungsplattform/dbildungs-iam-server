@@ -507,6 +507,31 @@ describe('RolleFindService', () => {
             });
             expect(result).toEqual([[], 0]);
         });
+
+        it('should use LIMITED_ROLLENART_ALLOWLIST from portal config', async () => {
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SCHULE,
+            });
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+
+            vi.spyOn(
+                rolleFindService as unknown as RolleFindServiceTestAccess,
+                'getOrganisationIdsWithParents',
+            ).mockResolvedValue([organisation.id]);
+
+            rolleRepoMock.findRollenAvailableForPersonenkontextCreation.mockResolvedValue([[], 0]);
+
+            await rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions: permissionsMock,
+                systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN,
+                organisationId: organisation.id,
+            });
+
+            expect(rolleRepoMock.findRollenAvailableForPersonenkontextCreation).toHaveBeenCalled();
+        });
     });
 
     describe('findMptRollenAuthorized', () => {
