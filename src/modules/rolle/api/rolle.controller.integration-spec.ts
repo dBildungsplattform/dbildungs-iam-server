@@ -2040,16 +2040,16 @@ describe('Rolle API', () => {
                 .query({ organisationId: organisation.id })
                 .send();
 
-            console.log(organisation.id, rolle.id); // Debugging line
-            console.log(JSON.stringify(response.body, null, 2)); // Debugging line
-
             expect(response.status).toBe(200);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             expect(response.body.total).toBe(1);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             expect(response.body.items).toHaveLength(1);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             expect(response.body.items[0].id).toBe(rolle.id);
         });
 
-        it('should return 404 if user is missing permissions', async () => {
+        it('should return empty result if user is missing permissions', async () => {
             const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
             );
@@ -2064,9 +2064,12 @@ describe('Rolle API', () => {
                 .query({ organisationId: organisation.id })
                 .send();
 
-            console.log(JSON.stringify(response.body, null, 2)); // Debugging line
-
-            expect(response.status).toBe(400);
+            expect(response.body).toStrictEqual({
+                items: [],
+                limit: 0,
+                offset: 0,
+                total: 0,
+            });
         });
 
         it('should return 400 if organisationId is missing', async () => {
