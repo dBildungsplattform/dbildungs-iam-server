@@ -281,6 +281,7 @@ export class ProviderController {
         ]: Counted<ManageableServiceProviderWithReferencedObjectsAndRollenerweiterungCount> =
             await this.serviceProviderService.findAuthorized(permissions, {
                 kategorien: params.kategorien,
+                searchFilter: params.searchFilter,
                 limit: params.limit,
                 offset: params.offset,
             });
