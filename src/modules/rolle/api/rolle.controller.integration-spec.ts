@@ -42,9 +42,12 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
+import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
+import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
+import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
@@ -52,16 +55,13 @@ import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
+import { ErrorIdType } from './ErrorIdType.enum.js';
+import { FindRollenQueryParams } from './find-rollen-query.params.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 import { RolleResponse } from './rolle.response.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
-import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
-import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
-import { ErrorIdType } from './ErrorIdType.enum.js';
-import { FindRollenQueryParams } from './find-rollen-query.params.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -747,7 +747,7 @@ describe('Rolle API', () => {
                 .get('/rolle')
                 .query({
                     systemrechte: [RollenSystemRechtEnum.ROLLEN_ERWEITERN, RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN],
-                    organisationId: org.id,
+                    organisationContextForOperation: org.id,
                 })
                 .send();
 
@@ -785,7 +785,7 @@ describe('Rolle API', () => {
                 .get('/rolle')
                 .query({
                     systemrechte: [RollenSystemRechtEnum.ROLLEN_ERWEITERN],
-                    organisationId: org.id,
+                    organisationContextForOperation: org.id,
                 })
                 .send();
 
@@ -922,7 +922,7 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?systemrechte=MPT_ROLLEN_VERWALTEN&organisationId=${orga.id}`)
+                .get(`/rolle?systemrechte=MPT_ROLLEN_VERWALTEN&organisationenForFilter=${orga.id}`)
                 .send();
 
             expect(response.status).toBe(200);
