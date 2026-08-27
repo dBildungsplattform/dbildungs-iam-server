@@ -837,6 +837,46 @@ describe('Rolle API', () => {
             );
         });
 
+        it('should return no rollen for import personenkontext if systemrecht is IMPORT_DURCHFUEHREN without orga ID', async () => {
+            const schule: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+
+            await Promise.all([
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        administeredBySchulstrukturknoten: schule.id,
+                        rollenart: RollenArt.LEHR,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        istTechnisch: false,
+                        administeredBySchulstrukturknoten: schule.id,
+                        rollenart: RollenArt.SYSADMIN,
+                    }),
+                ),
+            ]);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [schule.id] });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle?systemrechte=IMPORT_DURCHFUEHREN`)
+                .send();
+
+            expect(response.status).toBe(200);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+
+            expect(pagedResponse.items).toHaveLength(0);
+            expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
+                [RollenSystemRecht.IMPORT_DURCHFUEHREN],
+                true,
+                false,
+            );
+        });
+
         it('should return rollen filtered by multiple systemrechte', async () => {
             const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
             const rolleB: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
