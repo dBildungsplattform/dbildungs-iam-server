@@ -246,6 +246,11 @@ export class ServiceProviderRepo {
             where.kategorie = { $in: filter.kategorien };
         }
 
+        if (filter?.searchFilter) {
+            const escapedSearchFilter: string = filter.searchFilter.replace(/[\\%_]/g, '\\$&');
+            where.name = { $ilike: `%${escapedSearchFilter}%` };
+        }
+
         const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
             ServiceProviderEntity,
             where,
@@ -253,7 +258,7 @@ export class ServiceProviderRepo {
                 populate: ['merkmale', 'rollenartenWhitelist'],
                 limit: filter?.limit,
                 offset: filter?.offset,
-                orderBy: { kategorie: 'ASC' },
+                orderBy: { kategorie: 'ASC', name: 'ASC', id: 'ASC' },
             },
         );
 
