@@ -495,7 +495,9 @@ describe('RolleRepo', () => {
             const requestedOrganisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false),
             );
-            const otherOrganisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const otherOrganisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false),
+            );
 
             const requestedRolle: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, {
@@ -1590,7 +1592,8 @@ describe('RolleRepo', () => {
             });
 
             it('should return RolleHatPersonenkontexteError on foreign key violations', async () => {
-                const foreignKeyError: ForeignKeyConstraintViolationException = new ForeignKeyConstraintViolationException(new Error('Foreign key violation'));
+                const foreignKeyError: ForeignKeyConstraintViolationException =
+                    new ForeignKeyConstraintViolationException(new Error('Foreign key violation'));
                 vi.spyOn(em, 'flush').mockRejectedValueOnce(foreignKeyError);
 
                 const result: Option<DomainError> = await sut.deleteAuthorized(rolle.id, permissions);

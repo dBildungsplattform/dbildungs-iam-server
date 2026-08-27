@@ -642,7 +642,9 @@ describe('Provider Controller Test', () => {
                 const result: RawPagedResponse<ServiceProviderResponse> =
                     await providerController.getAvailableServiceProviders(queryParams, personPermissionsMock);
 
-                expect(serviceProviderServiceMock.findAllowedProvidersForRollenerweiterungAtOrga).not.toHaveBeenCalled();
+                expect(
+                    serviceProviderServiceMock.findAllowedProvidersForRollenerweiterungAtOrga,
+                ).not.toHaveBeenCalled();
                 expect(result).toBeInstanceOf(RawPagedResponse);
                 expect(result.total).toBe(0);
                 expect(result.offset).toBe(4);
@@ -662,7 +664,9 @@ describe('Provider Controller Test', () => {
                 const result: RawPagedResponse<ServiceProviderResponse> =
                     await providerController.getAvailableServiceProviders(queryParams, personPermissionsMock);
 
-                expect(serviceProviderServiceMock.findAllowedProvidersForRollenerweiterungAtOrga).not.toHaveBeenCalled();
+                expect(
+                    serviceProviderServiceMock.findAllowedProvidersForRollenerweiterungAtOrga,
+                ).not.toHaveBeenCalled();
                 expect(result).toBeInstanceOf(RawPagedResponse);
                 expect(result.total).toBe(0);
                 expect(result.offset).toBe(0);
