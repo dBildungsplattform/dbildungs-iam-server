@@ -7,6 +7,7 @@ import { Request } from 'express';
 import { Observable } from 'rxjs';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
+
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import {
     CommonTestModule,
@@ -59,8 +60,8 @@ import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
-import { FindRolleQueryParams } from './find-rolle-query.param.js';
 import { ErrorIdType } from './ErrorIdType.enum.js';
+import { FindRollenQueryParams } from './find-rollen-query.params.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -747,7 +748,7 @@ describe('Rolle API', () => {
                 .query({
                     systemrechte: [RollenSystemRechtEnum.ROLLEN_ERWEITERN, RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN],
                     organisationId: org.id,
-                } as FindRolleQueryParams)
+                })
                 .send();
 
             expect(response.status).toBe(200);
@@ -785,7 +786,7 @@ describe('Rolle API', () => {
                 .query({
                     systemrechte: [RollenSystemRechtEnum.ROLLEN_ERWEITERN],
                     organisationId: org.id,
-                } as FindRolleQueryParams)
+                })
                 .send();
 
             expect(response.status).toBe(200);
@@ -821,7 +822,11 @@ describe('Rolle API', () => {
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [schule.id] });
 
             const response: Response = await request(app.getHttpServer() as App)
-                .get(`/rolle?systemrechte=IMPORT_DURCHFUEHREN&organisationId=${schule.id}`)
+                .get(`/rolle`)
+                .query({
+                    systemrechte: 'IMPORT_DURCHFUEHREN',
+                    organisationContextForOperation: schule.id,
+                })
                 .send();
 
             expect(response.status).toBe(200);
@@ -972,6 +977,161 @@ describe('Rolle API', () => {
                 ]),
             );
         });
+
+        it('should return rollen filtered by organisationenForFilter', async () => {
+            const orgaA: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const orgaB: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+
+            await Promise.all([
+                rolleRepo.save(
+                    DoFactory.createRolle(false, { administeredBySchulstrukturknoten: orgaA.id, istTechnisch: false }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, { administeredBySchulstrukturknoten: orgaA.id, istTechnisch: false }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, { administeredBySchulstrukturknoten: orgaB.id, istTechnisch: false }),
+                ),
+            ]);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle`)
+                .query({
+                    organisationenForFilter: orgaA.id,
+                })
+                .send();
+
+            expect(response.status).toBe(200);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(2);
+            expect(
+                pagedResponse.items.every(
+                    (r: RolleWithServiceProvidersResponse) => r.administeredBySchulstrukturknoten === orgaA.id,
+                ),
+            ).toBe(true);
+        });
+
+        it('should return rollen filtered by merkmale', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+
+            await Promise.all([
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
+                        istTechnisch: false,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
+                        istTechnisch: false,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        merkmale: [],
+                        istTechnisch: false,
+                    }),
+                ),
+            ]);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle`)
+                .query({
+                    merkmale: RollenMerkmal.BEFRISTUNG_PFLICHT,
+                })
+                .send();
+
+            expect(response.status).toBe(200);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(2);
+            expect(
+                pagedResponse.items.every((r: RolleWithServiceProvidersResponse) =>
+                    r.merkmale.includes(RollenMerkmal.BEFRISTUNG_PFLICHT),
+                ),
+            ).toBe(true);
+        });
+
+        it('should return rollen filtered by rollenarten without operation right', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+
+            await Promise.all([
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        rollenart: RollenArt.LEHR,
+                        istTechnisch: false,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        rollenart: RollenArt.LEHR,
+                        istTechnisch: false,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        rollenart: RollenArt.LERN,
+                        istTechnisch: false,
+                    }),
+                ),
+            ]);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle`)
+                .query({
+                    rollenarten: RollenArt.LEHR,
+                })
+                .send();
+
+            expect(response.status).toBe(200);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(2);
+            expect(
+                pagedResponse.items.every((r: RolleWithServiceProvidersResponse) => r.rollenart === RollenArt.LEHR),
+            ).toBe(true);
+        });
+
+        it('should return 400 when organisationenForFilter is combined with an operation right', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle`)
+                .query({
+                    systemrechte: RollenSystemRecht.ROLLEN_ERWEITERN.name,
+                    organisationenForFilter: orga.id,
+                })
+                .send();
+
+            expect(response.status).toBe(400);
+        });
+
+        it('should return 400 when organisationContextForOperation is used without an operation right', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle`)
+                .query({
+                    organisationContextForOperation: orga.id,
+                })
+                .send();
+
+            expect(response.status).toBe(400);
+        });
     });
 
     describe(`when systemrecht is ${RollenSystemRechtEnum.IMPORT_DURCHFUEHREN}`, () => {
@@ -1014,14 +1174,13 @@ describe('Rolle API', () => {
             }
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
-
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/rolle`)
                 .query({
                     systemrechte,
                     rollenarten: [RollenArt.LEHR],
-                    organisationId: schule.id,
-                } as FindRolleQueryParams)
+                    organisationContextForOperation: schule.id,
+                })
                 .send();
 
             expect(response.status).toBe(200);
@@ -1060,7 +1219,7 @@ describe('Rolle API', () => {
                 .query({
                     systemrechte,
                     rollenarten: [RollenArt.LEHR],
-                } as FindRolleQueryParams)
+                } as FindRollenQueryParams)
                 .send();
 
             expect(response.status).toBe(200);
