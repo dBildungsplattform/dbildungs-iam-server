@@ -17,11 +17,6 @@ type DatabaseTestModuleOptions = {
 export class DatabaseTestModule implements OnModuleDestroy {
     private static postgres: Option<StartedPostgreSqlContainer>;
 
-    public static async stopContainer(): Promise<void> {
-        await DatabaseTestModule.postgres?.stop();
-        DatabaseTestModule.postgres = undefined;
-    }
-
     public static forRoot(options?: DatabaseTestModuleOptions): DynamicModule {
         return {
             module: DatabaseTestModule,
@@ -34,7 +29,7 @@ export class DatabaseTestModule implements OnModuleDestroy {
                             this.postgres = await new PostgreSqlContainer('docker.io/postgres:15.3-alpine')
                                 .withDatabase(dbName)
                                 .withPullPolicy(PullPolicy.defaultPolicy())
-                                .withReuse()
+                                .withReuse() // do not work for different containers names setted by withName()
                                 .withName(`testcontainer-db-${randomInt(0, 10000)}`)
                                 .start();
                         }
@@ -85,10 +80,18 @@ export class DatabaseTestModule implements OnModuleDestroy {
 
     public constructor(@Optional() @Inject(MikroORM) private orm?: MikroORM) {}
 
-    public async onModuleDestroy(): Promise<void> {
+    public static async stopContainer(): Promise<void> {
+        await DatabaseTestModule.postgres?.stop();
+    }
+
+    public async closeOrmsConnection(): Promise<void> {
         if (this.orm?.isConnected()) {
             await this.orm.close();
         }
-        // Container cleanup is handled by globalSetup teardown after all tests complete
+    }
+
+    public async onModuleDestroy(): Promise<void> {
+        await this.closeOrmsConnection();
+        await DatabaseTestModule.stopContainer();
     }
 }

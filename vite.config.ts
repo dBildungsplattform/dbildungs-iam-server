@@ -23,7 +23,6 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'node',
-        globalSetup: './test/vitest.global-setup.ts',
         hookTimeout: 60000, // 1 minute for setup/teardown
         testTimeout: 30000, // 30 seconds default timeout
         onConsoleLog: process.env['CI'] ? () => false : undefined, // Suppress console logs in CI environment
@@ -76,6 +75,8 @@ export default defineConfig({
                     maxWorkers: '50%', // limit the workers to leave CPU threads for test containers
                     hookTimeout: 300000, // 5 minutes for setup/teardown
                     testTimeout: 90000, // 1.5 minutes for integration tests
+                    // Scoped to this project only: a root-level globalSetup also runs for a phantom no-file context, tearing the shared container down early.
+                    globalSetup: './test/vitest.global-setup.ts',
                     sequence: {
                         groupOrder: 1,
                     },
