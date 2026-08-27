@@ -197,6 +197,42 @@ describe('RollenerweiterungRepo', () => {
                 expect(re.organisationId).toBe(organisations[0]!.id);
             }
         });
+
+        it('should return at most five rollenerweiterungen per service provider', async () => {
+            const parentOrga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const testServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+
+            const rolleResults: Array<Rolle<true> | DomainError> = await Promise.all(
+                makeN(
+                    () =>
+                        rolleRepo.save(
+                            DoFactory.createRolle(false, { administeredBySchulstrukturknoten: parentOrga.id }),
+                        ),
+                    6,
+                ),
+            );
+
+            const rollen: Rolle<true>[] = rolleResults.map((value: Rolle<true> | DomainError) => {
+                if (value instanceof DomainError) {
+                    throw value;
+                }
+                return value;
+            });
+
+            await Promise.all(
+                rollen.map((rolle: Rolle<true>) =>
+                    sut.create(factory.createNew(parentOrga.id, rolle.id, testServiceProvider.id)),
+                ),
+            );
+
+            const result: Map<ServiceProviderID, Rollenerweiterung<true>[]> = await sut.findByServiceProviderIds([
+                testServiceProvider.id,
+            ]);
+
+            expect(result.get(testServiceProvider.id)).toHaveLength(5);
+        });
     });
 
     describe('countByServiceProviderIds', () => {
@@ -371,6 +407,45 @@ describe('RollenerweiterungRepo', () => {
             expect(result).toHaveLength(1);
             expect(result[0]!.organisationId).toBe(otherOrganisation.id);
             expect(result[0]!.serviceProviderId).toBe(serviceProvider.id);
+        });
+    });
+
+    describe('findManyByRolleId', () => {
+        it('should return all rollenerweiterungen for the requested rolle id', async () => {
+            const organisationA: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationB: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const targetRolleOrError: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const otherRolleOrError: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+
+            if (targetRolleOrError instanceof DomainError || otherRolleOrError instanceof DomainError) {
+                throw new Error('Failed to create test rollen');
+            }
+
+            const targetRolle: Rolle<true> = targetRolleOrError;
+            const otherRolle: Rolle<true> = otherRolleOrError;
+
+            const serviceProviderA: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+            const serviceProviderB: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+
+            await sut.create(factory.createNew(organisationA.id, targetRolle.id, serviceProviderA.id));
+            await sut.create(factory.createNew(organisationB.id, targetRolle.id, serviceProviderB.id));
+            await sut.create(factory.createNew(organisationA.id, otherRolle.id, serviceProviderA.id));
+
+            const result: Array<Rollenerweiterung<true>> = await sut.findManyByRolleId(targetRolle.id);
+
+            expect(result).toHaveLength(2);
+            expect(result.every((entry: Rollenerweiterung<true>) => entry.rolleId === targetRolle.id)).toBe(true);
+        });
+
+        it('should return an empty array when no rollenerweiterungen exist for the requested rolle id', async () => {
+            const result: Array<Rollenerweiterung<true>> = await sut.findManyByRolleId(faker.string.uuid());
+
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(0);
         });
     });
 
