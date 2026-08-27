@@ -241,7 +241,7 @@ export class RolleFindService {
             allowedOrganisationIds,
             rolleIds,
             requireMerkmale: [RollenMerkmal.MPT_ROLLE],
-            orderByRollenArtAndName: true,
+            orderBy: 'artAndName',
             rollenArten: rollenartFilter,
         });
     }
