@@ -278,7 +278,9 @@ describe('Rolle API', () => {
                 expect(response.body).toBeInstanceOf(Object);
                 expect(response.body).toEqual(
                     expect.objectContaining({
-                        items: expect.arrayContaining([expect.objectContaining({ id: mptRolle.id })]),
+                        items: expect.arrayContaining([
+                            expect.objectContaining({ id: mptRolle.id }),
+                        ]) as Array<RolleResponse>,
                         total: 3,
                         offset: 0,
                         limit: 25,
@@ -303,7 +305,9 @@ describe('Rolle API', () => {
                 expect(response.body).toBeInstanceOf(Object);
                 expect(response.body).toEqual(
                     expect.objectContaining({
-                        items: expect.not.arrayContaining([expect.objectContaining({ id: mptRolle.id })]),
+                        items: expect.not.arrayContaining([
+                            expect.objectContaining({ id: mptRolle.id }),
+                        ]) as Array<RolleResponse>,
                         total: 2,
                         offset: 0,
                         limit: 25,
