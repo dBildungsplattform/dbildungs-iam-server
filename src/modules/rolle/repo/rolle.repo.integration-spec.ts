@@ -86,7 +86,6 @@ describe('RolleRepo', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
-        await orm.close();
         await module.close();
     });
 
@@ -1027,35 +1026,73 @@ describe('RolleRepo', () => {
             );
         });
 
-        it('should sort rollen if orderByRollenArtAndName is true', async () => {
-            const rollenInOrder: Rolle<true>[] = await Promise.all([
-                createRolle({
-                    rollenart: RollenArt.SYSADMIN,
-                    name: 'A',
-                }),
-                createRolle({
-                    rollenart: RollenArt.LEHR,
-                    name: 'B',
-                }),
-                createRolle({
-                    rollenart: RollenArt.LEHR,
-                    name: 'C',
-                }),
-                createRolle({
-                    rollenart: RollenArt.LEHR,
-                    name: 'D',
-                }),
-            ]);
+        type RollenArtAndNameTuple = {
+            rollenart: RollenArt;
+            name: string;
+        };
 
-            const scope: RolleFindByParameters = {
-                orderByRollenArtAndName: true,
-            };
+        it.each<[RolleFindByParameters['orderBy'], Array<RollenArtAndNameTuple>]>([
+            [
+                'artAndName',
+                [
+                    {
+                        rollenart: RollenArt.SYSADMIN,
+                        name: 'A',
+                    },
+                    {
+                        rollenart: RollenArt.LEHR,
+                        name: 'B',
+                    },
+                    {
+                        rollenart: RollenArt.LEHR,
+                        name: 'C',
+                    },
+                    {
+                        rollenart: RollenArt.LEHR,
+                        name: 'D',
+                    },
+                ],
+            ],
+            [
+                'name',
+                [
+                    {
+                        rollenart: RollenArt.EXTERN,
+                        name: 'A',
+                    },
+                    {
+                        rollenart: RollenArt.LERN,
+                        name: 'B',
+                    },
+                    {
+                        rollenart: RollenArt.LEHR,
+                        name: 'C',
+                    },
+                    {
+                        rollenart: RollenArt.LEHR,
+                        name: 'D',
+                    },
+                ],
+            ],
+        ])(
+            'should sort rollen correctly if orderBy is set to %s',
+            async (orderBy: RolleFindByParameters['orderBy'], artAndNameTuples: Array<RollenArtAndNameTuple>) => {
+                const rollenInOrder: Rolle<true>[] = await Promise.all(
+                    artAndNameTuples.map(({ rollenart, name }: RollenArtAndNameTuple) =>
+                        createRolle({ rollenart, name }),
+                    ),
+                );
 
-            const [result, count]: Counted<Rolle<true>> = await sut.findBy(scope);
+                const scope: RolleFindByParameters = {
+                    orderBy,
+                };
 
-            expect(count).toBe(4);
-            expect(result).toEqual(rollenInOrder);
-        });
+                const [result, count]: Counted<Rolle<true>> = await sut.findBy(scope);
+
+                expect(count).toBe(4);
+                expect(result).toEqual(rollenInOrder);
+            },
+        );
     });
 
     describe('findBySchulstrukturknoten', () => {
@@ -1110,6 +1147,66 @@ describe('RolleRepo', () => {
                     expect.objectContaining({ name: rolleB.name }),
                 ]),
             );
+        });
+    });
+
+    describe('findRollenAvailableForPersonenkontextCreation', () => {
+        it('should return rollen without MPT rollen', async () => {
+            await createRolle();
+            const rolle: Rolle<true> = await createRolle();
+            await createRolle({
+                administeredBySchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
+                rollenart: rolle.rollenart,
+                merkmale: [RollenMerkmal.MPT_ROLLE],
+            });
+
+            const [rollen, count]: Counted<Rolle<true>> = await sut.findRollenAvailableForPersonenkontextCreation({
+                organisationId: rolle.administeredBySchulstrukturknoten,
+                allowedOrganisationIds: [rolle.administeredBySchulstrukturknoten],
+                allowedRollenarten: [rolle.rollenart],
+            });
+
+            expect(rollen).toEqual([rolle]);
+            expect(count).toBe(1);
+        });
+
+        it('should return rollen with MPT rollen', async () => {
+            await createRolle();
+            const rolle: Rolle<true> = await createRolle();
+            const mptRolle: Rolle<true> = await createRolle({
+                administeredBySchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
+                rollenart: rolle.rollenart,
+                merkmale: [RollenMerkmal.MPT_ROLLE],
+            });
+
+            const [rollen, count]: Counted<Rolle<true>> = await sut.findRollenAvailableForPersonenkontextCreation({
+                organisationId: rolle.administeredBySchulstrukturknoten,
+                allowedOrganisationIds: [rolle.administeredBySchulstrukturknoten],
+                allowedRollenarten: [rolle.rollenart],
+                mpt: { allowedRollenarten: [rolle.rollenart] },
+            });
+
+            expect(rollen).toEqual(expect.arrayContaining([rolle, mptRolle]));
+            expect(count).toBe(2);
+        });
+
+        it('should return sticky rollen regardless of filter', async () => {
+            await createRolle();
+            const stickyRolle: Rolle<true> = await createRolle({ rollenart: RollenArt.LEHR });
+            const rolle: Rolle<true> = await createRolle({ rollenart: RollenArt.SORGBER });
+
+            const [rollen, count]: Counted<Rolle<true>> = await sut.findRollenAvailableForPersonenkontextCreation({
+                organisationId: rolle.administeredBySchulstrukturknoten,
+                allowedOrganisationIds: [rolle.administeredBySchulstrukturknoten],
+                allowedRollenarten: [rolle.rollenart],
+                stickyRollenIds: [stickyRolle.id],
+                searchStr: rolle.name,
+                limit: 1,
+                offset: 0,
+            });
+
+            expect(rollen).toEqual(expect.arrayContaining([stickyRolle, rolle]));
+            expect(count).toBe(1);
         });
     });
 

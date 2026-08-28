@@ -22,6 +22,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
+import { RollenArt } from '../domain/rolle.enums.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
@@ -31,7 +32,6 @@ import { NoRedundantRollenerweiterungError } from '../specification/error/no-red
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 import { RolleRepo } from './rolle.repo.js';
 import { RollenerweiterungRepo } from './rollenerweiterung.repo.js';
-import { RollenArt } from '../domain/rolle.enums.js';
 
 function makeN<T>(fn: () => T, n: number): Array<T> {
     return Array.from({ length: n }, fn);
@@ -78,7 +78,6 @@ describe('RollenerweiterungRepo', () => {
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
-        await orm.close();
         await module.close();
     });
 
