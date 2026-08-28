@@ -42,6 +42,7 @@ export type RollenerweiterungForManageableServiceProvider = {
 
 export type ManageableServiceProviderFilter = {
     kategorien?: ServiceProviderKategorie[];
+    searchFilter?: string;
     limit?: number;
     offset?: number;
 };
