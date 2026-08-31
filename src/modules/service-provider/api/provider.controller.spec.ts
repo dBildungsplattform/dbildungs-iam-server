@@ -631,7 +631,7 @@ describe('Provider Controller Test', () => {
                 vi.clearAllMocks();
             });
 
-            it('should skip the special branch', async () => {
+            it('should not use the organisation-scoped rollenerweiterung lookup', async () => {
                 const queryParams: FindAngeboteQueryParams = new FindAngeboteQueryParams();
                 Object.assign(queryParams, {
                     systemrechte: [RollenSystemRechtEnum.ROLLEN_ERWEITERN],
@@ -658,7 +658,7 @@ describe('Provider Controller Test', () => {
                 vi.clearAllMocks();
             });
 
-            it('should skip the special branch and use default paging', async () => {
+            it('should not use the organisation-scoped rollenerweiterung lookup and should apply default paging', async () => {
                 const queryParams: FindAngeboteQueryParams = new FindAngeboteQueryParams();
 
                 const result: RawPagedResponse<ServiceProviderResponse> =
