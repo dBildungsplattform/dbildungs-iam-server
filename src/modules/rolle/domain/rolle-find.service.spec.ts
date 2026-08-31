@@ -823,6 +823,40 @@ describe('RolleFindService', () => {
                 }),
             );
         });
+
+        it('should restrict MPT rollenarten to rollenartOfUser if it is allowed for the organisation', async () => {
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SCHULE,
+            });
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+
+            vi.spyOn(
+                rolleFindService as unknown as RolleFindServiceTestAccess,
+                'getOrganisationIdsWithParents',
+            ).mockResolvedValue([organisation.id]);
+
+            rolleRepoMock.findRollenAvailableForPersonenkontextCreation.mockResolvedValue([[], 0]);
+
+            const rollenartOfUser: RollenArt = RollenArt.LEHR;
+
+            await rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions: permissionsMock,
+                systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN,
+                organisationId: organisation.id,
+                rollenartOfUser,
+            });
+
+            expect(rolleRepoMock.findRollenAvailableForPersonenkontextCreation).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    mpt: {
+                        allowedRollenarten: [rollenartOfUser],
+                    },
+                }),
+            );
+        });
     });
 
     describe('getOrganisationIdsWithParents', () => {
