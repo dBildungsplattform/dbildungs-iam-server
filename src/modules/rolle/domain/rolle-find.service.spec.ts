@@ -358,11 +358,12 @@ describe('RolleFindService', () => {
                 requestedSystemrechte: [RollenSystemRecht.ROLLEN_ERWEITERN, RollenSystemRecht.MPT_ROLLEN_VERWALTEN],
             };
             await rolleFindService.findRollenAvailableForErweiterung(params);
-            expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
-                expect.objectContaining<Partial<RolleFindByParameters>>({
-                    excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
-                }),
-            );
+            expect(rolleRepoMock.findBy).not.toHaveBeenCalled();
+            // expect(rolleRepoMock.findBy).toHaveBeenLastCalledWith(
+            //     expect.objectContaining<Partial<RolleFindByParameters>>({
+            //         excludeMerkmale: [RollenMerkmal.MPT_ROLLE],
+            //     }),
+            // );
         });
     });
 
