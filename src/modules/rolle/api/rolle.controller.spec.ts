@@ -213,6 +213,52 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 }),
             );
         });
+
+        it('should return limit and offset from query params', async () => {
+            const permissions: IPersonPermissions = createPersonPermissionsMock();
+            const queryParams: FindRolleForPersonAdministrationQueryParams = {
+                searchStr: faker.string.alpha({ length: 8 }),
+                limit: 7,
+                offset: 13,
+                organisationIds: [faker.string.uuid()],
+            };
+            const foundRollen: Rolle<true>[] = [DoFactory.createRolle(true)];
+
+            rolleFindServiceMock.findRollenAvailableForPersonAdministration = vi
+                .fn()
+                .mockResolvedValueOnce([foundRollen, 42]);
+
+            const result: Paged<RolleResponse> = await rolleController.findRollenAvailableForPersonAdministration(
+                queryParams,
+                permissions,
+            );
+
+            expect(result.limit).toBe(queryParams.limit);
+            expect(result.offset).toBe(queryParams.offset);
+            expect(result.total).toBe(42);
+        });
+
+        it('should return default paging values when limit and offset are not provided', async () => {
+            const permissions: IPersonPermissions = createPersonPermissionsMock();
+            const queryParams: FindRolleForPersonAdministrationQueryParams = {
+                searchStr: faker.string.alpha({ length: 8 }),
+                organisationIds: [faker.string.uuid()],
+            };
+            const foundRollen: Rolle<true>[] = [DoFactory.createRolle(true), DoFactory.createRolle(true)];
+
+            rolleFindServiceMock.findRollenAvailableForPersonAdministration = vi
+                .fn()
+                .mockResolvedValueOnce([foundRollen, 100]);
+
+            const result: Paged<RolleResponse> = await rolleController.findRollenAvailableForPersonAdministration(
+                queryParams,
+                permissions,
+            );
+
+            expect(result.offset).toBe(0);
+            expect(result.limit).toBe(foundRollen.length);
+            expect(result.total).toBe(100);
+        });
     });
 
     describe('DELETE rolle/:rolleId', () => {
