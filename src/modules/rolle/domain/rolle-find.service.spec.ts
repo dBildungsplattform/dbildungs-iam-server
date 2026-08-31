@@ -573,6 +573,7 @@ describe('RolleFindService', () => {
                     RollenArt.SORGBER,
                     RollenArt.SCHB,
                     RollenArt.NLEHR,
+                    RollenArt.EXTERN,
                 ],
             });
         });
@@ -617,6 +618,7 @@ describe('RolleFindService', () => {
                     RollenArt.SORGBER,
                     RollenArt.SCHB,
                     RollenArt.NLEHR,
+                    RollenArt.EXTERN,
                 ],
             });
         });
@@ -661,6 +663,7 @@ describe('RolleFindService', () => {
                     RollenArt.SORGBER,
                     RollenArt.SCHB,
                     RollenArt.NLEHR,
+                    RollenArt.EXTERN,
                 ],
             });
         });
