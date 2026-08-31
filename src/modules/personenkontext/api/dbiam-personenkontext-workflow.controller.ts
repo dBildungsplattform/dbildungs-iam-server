@@ -64,8 +64,8 @@ export class DbiamPersonenkontextWorkflowController {
     public constructor(
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
-        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly logger: ClassLogger,
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
 
     @Get('step')

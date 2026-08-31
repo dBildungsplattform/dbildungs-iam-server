@@ -38,11 +38,14 @@ import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js'
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { ApplyRollenerweiterungForRolleService } from '../domain/apply-rollenerweiterungen-for-rolle-service.js';
 import { RolleFindService } from '../domain/rolle-find.service.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
@@ -52,27 +55,24 @@ import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
+import { ApplyRollenerweiterungChangesBodyParams } from './apply-rollenerweiterung-changes.body.params.js';
+import { ApplyRollenerweiterungForRollePathParams } from './apply-rollenerweiterung-for-rolle-changes.path.params.js';
+import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
+import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
+import { FindAvailableRollenForPKCreationQueryParams } from './find-available-rollen-for-pk-creation.query.params.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
-import { FindRolleQueryParams } from './find-rolle-query.param.js';
+import { FindRollenQueryParams } from './find-rollen-query.params.js';
+import { FindRollenerweiterungQueryParams } from './find-rollenerweiterung-query.params.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
+import { RolleResponse } from './rolle.response.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { FindRollenerweiterungQueryParams } from './find-rollenerweiterung-query.params.js';
-import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
-import { ApplyRollenerweiterungChangesBodyParams } from './apply-rollenerweiterung-changes.body.params.js';
-import { ApplyRollenerweiterungForRollePathParams } from './apply-rollenerweiterung-for-rolle-changes.path.params.js';
-import { PermittedOrgas } from '../../authentication/domain/person-permissions.js';
-import { ApplyRollenerweiterungForRolleService } from '../domain/apply-rollenerweiterungen-for-rolle-service.js';
-import { ApplyRollenerweiterungError } from './apply-rollenerweiterung.error.js';
-import { ApplyRollenerweiterungMultiExceptionFilter } from './apply-rollenerweiterung-multi-exception-filter.js';
-import { RolleResponse } from './rolle.response.js';
-import { FindAvailableRollenForPKCreationQueryParams } from './find-available-rollen-for-pk-creation.query.params.js';
 
 @UseFilters(new RolleExceptionFilter(), new ApplyRollenerweiterungMultiExceptionFilter())
 @ApiTags('rolle')
@@ -104,7 +104,7 @@ export class RolleController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get rollen.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all rollen.' })
     public async findRollen(
-        @Query() queryParams: FindRolleQueryParams,
+        @Query() queryParams: FindRollenQueryParams,
         @Permissions() permissions: IPersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
         let rollenAndTotal: [Rolle<true>[], number];
@@ -114,7 +114,9 @@ export class RolleController {
             rollenAndTotal = await this.rolleFindService.findRollenAvailableForImportPersonenkontext({
                 permissions,
                 searchStr: queryParams.searchStr,
-                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                organisationIds: queryParams.organisationContextForOperation
+                    ? [queryParams.organisationContextForOperation]
+                    : undefined,
                 rollenArten: queryParams.rollenarten,
                 limit: queryParams.limit,
                 offset: queryParams.offset,
@@ -126,7 +128,7 @@ export class RolleController {
                 queryParams.searchStr,
                 queryParams.limit,
                 queryParams.offset,
-                queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                queryParams.organisationenForFilter,
                 queryParams.rolleIds,
             );
         } else if (
@@ -141,7 +143,9 @@ export class RolleController {
             rollenAndTotal = await this.rolleFindService.findRollenAvailableForErweiterung({
                 permissions,
                 searchStr: queryParams.searchStr,
-                organisationIds: queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                organisationIds: queryParams.organisationContextForOperation
+                    ? [queryParams.organisationContextForOperation]
+                    : undefined,
                 rollenArten: queryParams.rollenarten,
                 limit: queryParams.limit,
                 offset: queryParams.offset,
@@ -157,8 +161,10 @@ export class RolleController {
                 queryParams.searchStr,
                 queryParams.limit,
                 queryParams.offset,
-                queryParams.organisationId ? [queryParams.organisationId] : undefined,
+                queryParams.organisationenForFilter,
                 queryParams.rolleIds,
+                queryParams.merkmale,
+                queryParams.rollenarten,
             );
         }
         const [rollen, total]: [Rolle<true>[], number] = rollenAndTotal;

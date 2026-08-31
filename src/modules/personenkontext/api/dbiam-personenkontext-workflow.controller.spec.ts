@@ -211,7 +211,6 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     });
 
                     const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
-
                     expect(response).toBeInstanceOf(PersonenkontextWorkflowResponse);
                 });
 

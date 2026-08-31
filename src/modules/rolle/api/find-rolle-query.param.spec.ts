@@ -4,11 +4,11 @@ import { plainToInstance } from 'class-transformer';
 import { ValidationError, validateSync } from 'class-validator';
 
 import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
-import { FindRolleQueryParams } from './find-rolle-query.param.js';
+import { FindRollenQueryParams } from './find-rollen-query.params.js';
 
-describe('FindRolleQueryParams', () => {
+describe('FindRollenQueryParams', () => {
     it('should accept MPT_ROLLEN_VERWALTEN for rollen admin queries', () => {
-        const queryParams: FindRolleQueryParams = plainToInstance(FindRolleQueryParams, {
+        const queryParams: FindRollenQueryParams = plainToInstance(FindRollenQueryParams, {
             systemrechte: [RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN],
         });
 

@@ -1,9 +1,12 @@
-import { vi } from 'vitest';
+import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 import { uniq } from 'lodash-es';
+import { vi } from 'vitest';
 import { createMock, DeepMocked } from '../../../../test/utils/createMock.js';
 import { ConfigTestModule, DoFactory } from '../../../../test/utils/index.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { Ok } from '../../../shared/util/result.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -14,9 +17,6 @@ import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
 import { RollenSystemRecht } from './systemrecht.js';
-import { Ok } from '../../../shared/util/result.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { faker } from '@faker-js/faker';
 
 type RolleFindServiceTestAccess = {
     getOrganisationIdsWithParents(organisationIds: OrganisationID[]): Promise<OrganisationID[]>;
@@ -636,6 +636,7 @@ describe('RolleFindService', () => {
                     RollenArt.SORGBER,
                     RollenArt.SCHB,
                     RollenArt.NLEHR,
+                    RollenArt.EXTERN,
                 ],
             });
         });
@@ -680,6 +681,7 @@ describe('RolleFindService', () => {
                     RollenArt.SORGBER,
                     RollenArt.SCHB,
                     RollenArt.NLEHR,
+                    RollenArt.EXTERN,
                 ],
             });
         });
@@ -724,8 +726,48 @@ describe('RolleFindService', () => {
                     RollenArt.SORGBER,
                     RollenArt.SCHB,
                     RollenArt.NLEHR,
+                    RollenArt.EXTERN,
                 ],
             });
+        });
+    });
+
+    describe('findRollenAvailableForPersonenkontextCreation', () => {
+        let permissionsMock: DeepMocked<PersonPermissions>;
+        beforeEach(() => {
+            permissionsMock = createMock(PersonPermissions);
+        });
+
+        it('should return early, if no organisation is found', async () => {
+            organisationRepoMock.findById.mockResolvedValue(undefined);
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions: permissionsMock,
+                systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN,
+                organisationId: 'does not exist',
+            });
+            expect(result).toEqual([[], 0]);
+        });
+
+        it('should return early, if creation is not permitted', async () => {
+            organisationRepoMock.findById.mockResolvedValue(DoFactory.createOrganisation(true));
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions: permissionsMock,
+                systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN,
+                organisationId: 'does not exist',
+            });
+            expect(result).toEqual([[], 0]);
+        });
+
+        it('should return early, if allowed rollenarten can not be determined due to missing organisationsTyp', async () => {
+            organisationRepoMock.findById.mockResolvedValue(DoFactory.createOrganisation(true, { typ: undefined }));
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions: permissionsMock,
+                systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN,
+                organisationId: 'does not exist',
+            });
+            expect(result).toEqual([[], 0]);
         });
     });
 

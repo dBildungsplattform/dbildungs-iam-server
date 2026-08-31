@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { intersection } from 'lodash-es';
 import { ServerConfig } from '../../../shared/config/index.js';
+import { PortalConfig } from '../../../shared/config/portal.config.js';
+import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
@@ -13,8 +15,6 @@ import { RollenArt, RollenMerkmal } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { OrganisationMatchesRollenart } from './specification/organisation-matches-rollenart.js';
 import { RollenSystemRecht } from './systemrecht.js';
-import { PortalConfig } from '../../../shared/config/portal.config.js';
-import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
 
 export interface FindRollenWithPermissionsParams {
     permissions: IPersonPermissions;
@@ -190,6 +190,62 @@ export class RolleFindService {
         return [allowedRollen, total];
     }
 
+    public async findMptRollenAuthorized(
+        permissions: IPersonPermissions,
+        includeTechnische: boolean,
+        searchStr?: string,
+        limit?: number,
+        offset?: number,
+        organisationIds?: OrganisationID[],
+        rolleIds?: RolleID[],
+    ): Promise<Counted<Rolle<true>>> {
+        const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.MPT_ROLLEN_VERWALTEN],
+            true,
+        );
+
+        // Narrow the requested organisation IDs using the allowed organisations
+        let filteredRequestedOrgaIds: OrganisationID[] | undefined;
+        if (organisationIds && organisationIds.length > 0) {
+            filteredRequestedOrgaIds = intersectPermittedAndRequestedOrgas(orgIdsWithRecht, organisationIds);
+        } else if (!orgIdsWithRecht.all) {
+            filteredRequestedOrgaIds = orgIdsWithRecht.orgaIds;
+        }
+
+        if (filteredRequestedOrgaIds && filteredRequestedOrgaIds.length === 0) {
+            return [[], 0];
+        }
+
+        let allowedOrganisationIds: OrganisationID[] | undefined = filteredRequestedOrgaIds;
+        let rollenartFilter: RollenArt[] | undefined;
+        if (filteredRequestedOrgaIds) {
+            const [orgaTypes, orgaIdsWithParents]: [OrganisationsTyp[], OrganisationID[]] = await Promise.all([
+                this.organisationRepository.findDistinctOrganisationsTypen(filteredRequestedOrgaIds),
+                this.getOrganisationIdsWithParents(filteredRequestedOrgaIds),
+            ]);
+
+            // Get organisations to create rollenart filter
+            rollenartFilter = Array.from(
+                OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationTypes(orgaTypes),
+            );
+
+            // Set allowed orgas
+            allowedOrganisationIds = orgaIdsWithParents;
+        }
+
+        return this.rolleRepo.findBy({
+            includeTechnische,
+            searchStr,
+            limit,
+            offset,
+            allowedOrganisationIds,
+            rolleIds,
+            requireMerkmale: [RollenMerkmal.MPT_ROLLE],
+            orderBy: 'artAndName',
+            rollenArten: rollenartFilter,
+        });
+    }
+
     public async findRollenAvailableForPersonenkontextCreation(
         params: FindRollenForPersonenkontextCreationWithPermissionsParams,
     ): Promise<Counted<Rolle<true>>> {
@@ -269,62 +325,6 @@ export class RolleFindService {
             : allowedRollenartenForMPTRollen;
 
         return [allowedRollenarten, allowedRollenartenForMPTRollen];
-    }
-
-    public async findMptRollenAuthorized(
-        permissions: IPersonPermissions,
-        includeTechnische: boolean,
-        searchStr?: string,
-        limit?: number,
-        offset?: number,
-        organisationIds?: OrganisationID[],
-        rolleIds?: RolleID[],
-    ): Promise<Counted<Rolle<true>>> {
-        const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.MPT_ROLLEN_VERWALTEN],
-            true,
-        );
-
-        // Narrow the requested organisation IDs using the allowed organisations
-        let filteredRequestedOrgaIds: OrganisationID[] | undefined;
-        if (organisationIds && organisationIds.length > 0) {
-            filteredRequestedOrgaIds = intersectPermittedAndRequestedOrgas(orgIdsWithRecht, organisationIds);
-        } else if (!orgIdsWithRecht.all) {
-            filteredRequestedOrgaIds = orgIdsWithRecht.orgaIds;
-        }
-
-        if (filteredRequestedOrgaIds && filteredRequestedOrgaIds.length === 0) {
-            return [[], 0];
-        }
-
-        let allowedOrganisationIds: OrganisationID[] | undefined = filteredRequestedOrgaIds;
-        let rollenartFilter: RollenArt[] | undefined;
-        if (filteredRequestedOrgaIds) {
-            const [orgaTypes, orgaIdsWithParents]: [OrganisationsTyp[], OrganisationID[]] = await Promise.all([
-                this.organisationRepository.findDistinctOrganisationsTypen(filteredRequestedOrgaIds),
-                this.getOrganisationIdsWithParents(filteredRequestedOrgaIds),
-            ]);
-
-            // Get organisations to create rollenart filter
-            rollenartFilter = Array.from(
-                OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationTypes(orgaTypes),
-            );
-
-            // Set allowed orgas
-            allowedOrganisationIds = orgaIdsWithParents;
-        }
-
-        return this.rolleRepo.findBy({
-            includeTechnische,
-            searchStr,
-            limit,
-            offset,
-            allowedOrganisationIds,
-            rolleIds,
-            requireMerkmale: [RollenMerkmal.MPT_ROLLE],
-            orderBy: 'artAndName',
-            rollenArten: rollenartFilter,
-        });
     }
 
     private async getOrganisationIdsWithParents(organisationIds: OrganisationID[]): Promise<OrganisationID[]> {
