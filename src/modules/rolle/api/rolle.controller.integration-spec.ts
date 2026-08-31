@@ -1022,6 +1022,21 @@ describe('Rolle API', () => {
                     organisationId: schule.id,
                 } as FindRollenQueryParams)
                 .send();
+
+            expect(response.status).toBe(200);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+
+            expect(pagedResponse.items).toHaveLength(1);
+            expect(pagedResponse.items).toEqual(
+                expect.arrayContaining([expect.objectContaining({ id: role1.id, name: role1.name })]),
+            );
+            expect(pagedResponse.items[0]?.rollenart).toBe(RollenArt.LEHR);
+            expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
+                [RollenSystemRecht.IMPORT_DURCHFUEHREN],
+                true,
+                false,
+            );
         });
 
         it('should return rollen filtered by organisationenForFilter', async () => {
