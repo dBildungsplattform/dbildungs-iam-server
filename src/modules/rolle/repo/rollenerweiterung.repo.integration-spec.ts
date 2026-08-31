@@ -440,11 +440,23 @@ describe('RollenerweiterungRepo', () => {
             expect(result.every((entry: Rollenerweiterung<true>) => entry.rolleId === targetRolle.id)).toBe(true);
         });
 
-        it('should return an empty array when no rollenerweiterungen exist for the requested rolle id', async () => {
+        it('should return an empty array when rollenerweiterungen only exist for another rolle', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const existingRolleOrError: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+
+            if (existingRolleOrError instanceof DomainError) {
+                throw existingRolleOrError;
+            }
+
+            const serviceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+            });
+
+            await sut.create(factory.createNew(organisation.id, existingRolleOrError.id, serviceProvider.id));
+
             const result: Array<Rollenerweiterung<true>> = await sut.findManyByRolleId(faker.string.uuid());
 
-            expect(result).toBeInstanceOf(Array);
-            expect(result).toHaveLength(0);
+            expect(result).toEqual([]);
         });
     });
 
