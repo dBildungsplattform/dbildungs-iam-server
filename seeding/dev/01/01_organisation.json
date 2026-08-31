@@ -1473,6 +1473,167 @@
             "zugehoerigZu": 13
         },
         {
+            "id": 1318,
+            "name": "12",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1319,
+            "name": "13",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1320,
+            "name": "14",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1321,
+            "name": "15",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1322,
+            "name": "16",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1323,
+            "name": "17",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1324,
+            "name": "18",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1325,
+            "name": "19",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1326,
+            "name": "20",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1327,
+            "name": "21",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1328,
+            "name": "22",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1329,
+            "name": "23",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1330,
+            "name": "24",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1331,
+            "name": "25",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1332,
+            "name": "26",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1333,
+            "name": "27",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1334,
+            "name": "28",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1335,
+            "name": "29",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1336,
+            "name": "30",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1337,
+            "name": "31",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1338,
+            "name": "32",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1339,
+            "name": "33",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
+            "id": 1340,
+            "name": "34",
+            "typ": "KLASSE",
+            "administriertVon": 13,
+            "zugehoerigZu": 13
+        },
+        {
             "id": 1401,
             "name": "1",
             "typ": "KLASSE",
