@@ -730,6 +730,99 @@ describe('RolleFindService', () => {
 
             expect(rolleRepoMock.findRollenAvailableForPersonenkontextCreation).toHaveBeenCalled();
         });
+
+        it('should use limited rollenarten allowlist and include MPT configuration when user has MPT permission', async () => {
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SCHULE,
+            });
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+
+            vi.spyOn(
+                rolleFindService as unknown as RolleFindServiceTestAccess,
+                'getOrganisationIdsWithParents',
+            ).mockResolvedValue([organisation.id]);
+
+            rolleRepoMock.findRollenAvailableForPersonenkontextCreation.mockResolvedValue([[], 0]);
+
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions: permissionsMock,
+                systemrecht: RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
+                organisationId: organisation.id,
+            });
+
+            expect(result).toEqual([[], 0]);
+
+            expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenNthCalledWith(
+                1,
+                organisation.id,
+                RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
+            );
+
+            expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenNthCalledWith(
+                2,
+                organisation.id,
+                RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
+            );
+
+            expect(rolleRepoMock.findRollenAvailableForPersonenkontextCreation).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    organisationId: organisation.id,
+                    allowedOrganisationIds: [organisation.id],
+                    mpt: {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        allowedRollenarten: expect.any(Array),
+                    },
+                }),
+            );
+        });
+
+        it('should not include MPT configuration when user has no MPT permission', async () => {
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SCHULE,
+            });
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+
+            permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+
+            vi.spyOn(
+                rolleFindService as unknown as RolleFindServiceTestAccess,
+                'getOrganisationIdsWithParents',
+            ).mockResolvedValue([organisation.id]);
+
+            rolleRepoMock.findRollenAvailableForPersonenkontextCreation.mockResolvedValue([[], 0]);
+
+            const result: Counted<Rolle<true>> = await rolleFindService.findRollenAvailableForPersonenkontextCreation({
+                permissions: permissionsMock,
+                systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN,
+                organisationId: organisation.id,
+            });
+
+            expect(result).toEqual([[], 0]);
+
+            expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenNthCalledWith(
+                1,
+                organisation.id,
+                RollenSystemRecht.PERSONEN_ANLEGEN,
+            );
+
+            expect(permissionsMock.hasSystemrechtAtOrganisation).toHaveBeenNthCalledWith(
+                2,
+                organisation.id,
+                RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
+            );
+
+            expect(rolleRepoMock.findRollenAvailableForPersonenkontextCreation).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    organisationId: organisation.id,
+                    allowedOrganisationIds: [organisation.id],
+                    mpt: undefined,
+                }),
+            );
+        });
     });
 
     describe('getOrganisationIdsWithParents', () => {
