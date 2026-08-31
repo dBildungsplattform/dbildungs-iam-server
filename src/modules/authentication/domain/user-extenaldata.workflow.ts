@@ -130,15 +130,15 @@ export class UserExternaldataWorkflowAggregate {
         }
         this.singleRollenart = uniqueRollenarten.length === 1 ? uniqueRollenarten[0] : undefined;
 
-        this.polytheaDienststellenNummern = this.computePolytheaDienststellenNummern(this.checkedExternalPkData);
+        this.polytheaDienststellenNummern = this.computePolytheaDienststellenNummern(this.mergedExternalPkData);
 
         this.oxParams = this.computeOxParams(this.mergedExternalPkData, this.oxLoginId, this.person);
 
         return undefined;
     }
 
-    private computePolytheaDienststellenNummern(checkedExternalPkData: ExternalPkData[]): string[] {
-        return checkedExternalPkData
+    private computePolytheaDienststellenNummern(mergedExternalPkData: ExternalPkData[]): string[] {
+        const polytheaDienststellenNummern: string[] = mergedExternalPkData
             .filter(
                 (pk: ExternalPkData) =>
                     pk.serviceProvider &&
@@ -149,6 +149,8 @@ export class UserExternaldataWorkflowAggregate {
             )
             .map((pk: ExternalPkData) => pk.kennung)
             .filter((kennung: string | undefined): kennung is string => kennung !== undefined);
+        new Set(polytheaDienststellenNummern).entries();
+        return Array.from(new Set(polytheaDienststellenNummern));
     }
 
     // Filtering out !expk.kennung || !expk.rollenart automatically leads to only valid organisations of type SCHOOLS are included
