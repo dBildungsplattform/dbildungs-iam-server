@@ -144,13 +144,7 @@ describe('Rolle API', () => {
     }, 10000000);
 
     afterAll(async () => {
-        if (await orm?.isConnected()) {
-            await orm.close();
-        }
-
-        if (app) {
-            await app.close();
-        }
+        await app.close();
     });
 
     beforeEach(async () => {
@@ -859,6 +853,55 @@ describe('Rolle API', () => {
             expect(
                 pagedResponse.items.every((r: RolleWithServiceProvidersResponse) =>
                     r.merkmale.includes(RollenMerkmal.BEFRISTUNG_PFLICHT),
+                ),
+            ).toBe(true);
+        });
+
+        it('should return rollen filtered by serviceProviderIds', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const sp1: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+            const sp2: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+
+            await Promise.all([
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        serviceProviderIds: [sp1.id],
+                        istTechnisch: false,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        serviceProviderIds: [sp1.id],
+                        istTechnisch: false,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        serviceProviderIds: [sp2.id],
+                        istTechnisch: false,
+                    }),
+                ),
+            ]);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle`)
+                .query({
+                    serviceProviderIds: sp1.id,
+                })
+                .send();
+
+            expect(response.status).toBe(200);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(2);
+            expect(
+                pagedResponse.items.every((r: RolleWithServiceProvidersResponse) =>
+                    r.serviceProviders.some((sp: { id: string; name: string }) => sp.id === sp1.id),
                 ),
             ).toBe(true);
         });
