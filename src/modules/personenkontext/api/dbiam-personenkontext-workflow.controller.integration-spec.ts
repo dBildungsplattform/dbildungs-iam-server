@@ -53,7 +53,7 @@ import { OperationContext } from '../domain/personenkontext.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
-import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-personenkontextworkflow-body.params.js';
+import { FindDbiamPersonenkontextWorkflowQueryParams } from './param/dbiam-find-personenkontextworkflow-query.params.js';
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
 import { PersonenkontextWorkflowResponse } from './response/dbiam-personenkontext-workflow-response.js';
 
@@ -176,7 +176,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     .get(`/personenkontext-workflow/step`)
                     .query({
                         operationContext: OperationContext.PERSON_ANLEGEN,
-                    } as FindDbiamPersonenkontextWorkflowBodyParams)
+                    } as FindDbiamPersonenkontextWorkflowQueryParams)
                     .send();
                 expect(response.status).toBe(200);
                 const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
@@ -218,7 +218,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         .query({
                             operationContext: OperationContext.PERSON_ANLEGEN,
                             organisationId: schule.id,
-                        } as FindDbiamPersonenkontextWorkflowBodyParams)
+                        } as FindDbiamPersonenkontextWorkflowQueryParams)
                         .send();
                     expect(response.status).toBe(200);
                     const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
@@ -257,7 +257,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                             operationContext: OperationContext.PERSON_ANLEGEN,
                             organisationId: schule.id,
                             requestedWithSystemrecht: RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
-                        } as FindDbiamPersonenkontextWorkflowBodyParams)
+                        } as FindDbiamPersonenkontextWorkflowQueryParams)
                         .send();
                     expect(response.status).toBe(200);
                     const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
@@ -314,7 +314,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                             operationContext: OperationContext.PERSON_ANLEGEN,
                             organisationId: schule.id,
                             rollenIds: [mptRolle.id, mismatchedRolle.id],
-                        } as FindDbiamPersonenkontextWorkflowBodyParams)
+                        } as FindDbiamPersonenkontextWorkflowQueryParams)
                         .send();
                     expect(response.status).toBe(200);
                     expect(response.body).toEqual(
@@ -357,7 +357,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         .query({
                             operationContext: OperationContext.PERSON_ANLEGEN,
                             organisationId: schule.id,
-                        } as FindDbiamPersonenkontextWorkflowBodyParams)
+                        } as FindDbiamPersonenkontextWorkflowQueryParams)
                         .send();
                     expect(response.status).toBe(200);
                     const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
@@ -407,7 +407,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                             operationContext: OperationContext.PERSON_ANLEGEN,
                             organisationId: schule.id,
                             rollenIds: [mptRolle.id],
-                        } as FindDbiamPersonenkontextWorkflowBodyParams)
+                        } as FindDbiamPersonenkontextWorkflowQueryParams)
                         .send();
                     expect(response.status).toBe(200);
                     expect(response.body).toEqual(
@@ -465,7 +465,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         operationContext: OperationContext.PERSON_BEARBEITEN,
                         organisationId: organisation.id,
                         personId: existingPerson.id,
-                    } as FindDbiamPersonenkontextWorkflowBodyParams)
+                    } as FindDbiamPersonenkontextWorkflowQueryParams)
                     .send();
                 expect(response.status).toBe(200);
                 const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
@@ -496,7 +496,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         operationContext: OperationContext.PERSON_BEARBEITEN,
                         organisationId: organisation.id,
                         personId: existingPerson.id,
-                    } as FindDbiamPersonenkontextWorkflowBodyParams)
+                    } as FindDbiamPersonenkontextWorkflowQueryParams)
                     .send();
                 expect(response.status).toBe(200);
                 const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
@@ -526,7 +526,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         organisationId: organisation.id,
                         rollenIds: [rolle.id, newRolle.id],
                         personId: existingPerson.id,
-                    } as FindDbiamPersonenkontextWorkflowBodyParams)
+                    } as FindDbiamPersonenkontextWorkflowQueryParams)
                     .send();
                 expect(response.status).toBe(200);
                 const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;
@@ -553,7 +553,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                         organisationId: organisation.id,
                         rollenIds: [rolle.id, newRolle.id],
                         personId: existingPerson.id,
-                    } as FindDbiamPersonenkontextWorkflowBodyParams)
+                    } as FindDbiamPersonenkontextWorkflowQueryParams)
                     .send();
                 expect(response.status).toBe(200);
                 const body: PersonenkontextWorkflowResponse = response.body as PersonenkontextWorkflowResponse;

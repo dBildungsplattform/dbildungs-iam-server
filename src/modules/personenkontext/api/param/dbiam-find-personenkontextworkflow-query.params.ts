@@ -5,7 +5,7 @@ import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../../../rolle
 import { OperationContext } from '../../domain/personenkontext.enums.js';
 import { PersonID } from '../../../../shared/types/aggregate-ids.types.js';
 
-export class FindDbiamPersonenkontextWorkflowBodyParams {
+export class FindDbiamPersonenkontextWorkflowQueryParams {
     @IsEnum(OperationContext)
     @ApiProperty({
         enum: OperationContext,

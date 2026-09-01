@@ -13,7 +13,7 @@ import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-up
 import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
-import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-personenkontextworkflow-body.params.js';
+import { FindDbiamPersonenkontextWorkflowQueryParams } from './param/dbiam-find-personenkontextworkflow-query.params.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { DbiamPersonenkontextWorkflowController } from './dbiam-personenkontext-workflow.controller.js';
@@ -104,8 +104,8 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
 
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
-                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    const params: FindDbiamPersonenkontextWorkflowQueryParams =
+                        new FindDbiamPersonenkontextWorkflowQueryParams();
                     Object.assign(params, {
                         operationContext,
                         organisationId: organisation.id,
@@ -127,8 +127,8 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
 
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
-                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    const params: FindDbiamPersonenkontextWorkflowQueryParams =
+                        new FindDbiamPersonenkontextWorkflowQueryParams();
                     Object.assign(params, {
                         operationContext,
                         organisationName: randomName,
@@ -148,8 +148,8 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
 
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([]);
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
-                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    const params: FindDbiamPersonenkontextWorkflowQueryParams =
+                        new FindDbiamPersonenkontextWorkflowQueryParams();
                     Object.assign(params, {
                         operationContext,
                         organisationId: organisation.id,
@@ -174,8 +174,8 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
 
                     const personpermissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
 
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
-                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    const params: FindDbiamPersonenkontextWorkflowQueryParams =
+                        new FindDbiamPersonenkontextWorkflowQueryParams();
                     Object.assign(params, {
                         operationContext,
                         organisationId,
@@ -202,8 +202,8 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
 
                     personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
                     personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
-                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    const params: FindDbiamPersonenkontextWorkflowQueryParams =
+                        new FindDbiamPersonenkontextWorkflowQueryParams();
                     Object.assign(params, {
                         operationContext,
                         organisationId: organisation.id,
@@ -227,8 +227,8 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                         Err(new MissingPermissionsError('not authorized')),
                     );
 
-                    const params: FindDbiamPersonenkontextWorkflowBodyParams =
-                        new FindDbiamPersonenkontextWorkflowBodyParams();
+                    const params: FindDbiamPersonenkontextWorkflowQueryParams =
+                        new FindDbiamPersonenkontextWorkflowQueryParams();
                     Object.assign(params, {
                         operationContext,
                         organisationId: organisation.id,

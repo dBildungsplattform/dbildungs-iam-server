@@ -4,6 +4,7 @@ import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.typ
 import { RollenArt, RollenArtTypName } from '../domain/rolle.enums.js';
 import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
 import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 
 export class FindAvailableRollenForPKCreationQueryParams extends PagedQueryParams {
     @IsUUID()
@@ -37,6 +38,7 @@ export class FindAvailableRollenForPKCreationQueryParams extends PagedQueryParam
     @ArrayUnique()
     @IsUUID(undefined, { each: true })
     @IsOptional()
+    @TransformToArray()
     @ApiProperty({
         description: 'The rollenIds for which the available rollen should be found',
         required: false,

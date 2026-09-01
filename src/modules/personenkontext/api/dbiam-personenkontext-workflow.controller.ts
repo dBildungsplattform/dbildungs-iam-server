@@ -44,7 +44,7 @@ import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-updat
 import { DbiamCreatePersonWithPersonenkontexteBodyParams } from './param/dbiam-create-person-with-personenkontexte.body.params.js';
 import { DbiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
-import { FindDbiamPersonenkontextWorkflowBodyParams } from './param/dbiam-find-personenkontextworkflow-body.params.js';
+import { FindDbiamPersonenkontextWorkflowQueryParams } from './param/dbiam-find-personenkontextworkflow-query.params.js';
 import { DbiamUpdatePersonenkontexteBodyParams } from './param/dbiam-update-personenkontexte.body.params.js';
 import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
@@ -69,7 +69,7 @@ export class DbiamPersonenkontextWorkflowController {
     ) {}
 
     @Get('step')
-    @UseGuards(StepUpGuard)
+    //@UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: `Initialize or process data from the person creation form.
                       Valid combinations:
@@ -83,7 +83,7 @@ export class DbiamPersonenkontextWorkflowController {
     @ApiForbiddenResponse({ description: 'Insufficient permission to get data for personenkontext.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting data for personenkontext.' })
     public async processStep(
-        @Query() params: FindDbiamPersonenkontextWorkflowBodyParams,
+        @Query() params: FindDbiamPersonenkontextWorkflowQueryParams,
         @Permissions() permissions: IPersonPermissions,
     ): Promise<PersonenkontextWorkflowResponse> {
         // Creates a new instance of the workflow aggregate
