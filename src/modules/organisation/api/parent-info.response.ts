@@ -9,7 +9,7 @@ export class ParentInfoResponse {
     @ApiProperty({ nullable: true })
     public readonly name?: string;
 
-    @ApiProperty({ nullable: true })
+    @ApiProperty({ enum: OrganisationsTyp, nullable: true })
     public readonly typ?: OrganisationsTyp;
 
     public constructor(organisation: Organisation<true>) {
