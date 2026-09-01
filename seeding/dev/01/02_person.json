@@ -4554,28 +4554,6 @@
             "personalnummer": "7000163"
         },
         {
-            "id": 718,
-            "username": "twinter",
-            "password": "SPSHtest1!",
-            "vorname": "Tanja",
-            "familienname": "Winter"
-        },
-        {
-            "id": 719,
-            "username": "ulindner",
-            "password": "SPSHtest1!",
-            "vorname": "Uwe",
-            "familienname": "Lindner"
-        },
-        {
-            "id": 720,
-            "username": "vpeters",
-            "password": "SPSHtest1!",
-            "vorname": "Vera",
-            "familienname": "Peters",
-            "personalnummer": "7000164"
-        },
-        {
             "id": 721,
             "username": "wgerber",
             "password": "SPSHtest1!",
