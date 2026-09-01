@@ -28,6 +28,7 @@ import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
@@ -43,6 +44,7 @@ import { ServiceProviderApiModule } from '../service-provider-api.module.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { CreateServiceProviderResponse } from './create-service-provider.response.js';
 import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
+import { ManageableLandRootServiceProvidersQueryParams } from './manageable-land-root-service-providers-query.params.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
@@ -1079,6 +1081,146 @@ describe('ServiceProvider API', () => {
 
             expect(response.status).toBe(404);
             expect(response.body).toEqual(expect.objectContaining({ i18nKey: 'MISSING_PERMISSIONS' }));
+        });
+    });
+
+    describe('/GET provider/manageable-land-root', () => {
+        const url: string = '/provider/manageable-land-root';
+
+        describe('when user has permission', () => {
+            const setup = async (): Promise<{
+                landOrganisation: Organisation<true>;
+                serviceProviders: ServiceProvider<true>[];
+            }> => {
+                const landOrganisation: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.LAND }),
+                );
+                const serviceProviders: ServiceProvider<true>[] = await Promise.all([
+                    createAndPersistServiceProvider(em, {
+                        providedOnSchulstrukturknoten: landOrganisation.id,
+                        name: 'A Provider',
+                    }),
+                    createAndPersistServiceProvider(em, {
+                        providedOnSchulstrukturknoten: landOrganisation.id,
+                        name: 'B Provider',
+                    }),
+                    createAndPersistServiceProvider(em, {
+                        providedOnSchulstrukturknoten: landOrganisation.id,
+                        name: 'C Provider',
+                    }),
+                ]);
+                return { landOrganisation, serviceProviders };
+            };
+
+            it('should return service providers for LAND and ROOT organisations', async () => {
+                const { serviceProviders: landServiceProviders }: { serviceProviders: ServiceProvider<true>[] } =
+                    await setup();
+
+                const rootOrganisation: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.ROOT }),
+                );
+                const rootServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: rootOrganisation.id,
+                });
+
+                const schuleOrganisation: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+                );
+                const schuleServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: schuleOrganisation.id,
+                });
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .send();
+
+                const body: RawPagedResponse<ServiceProviderResponse> =
+                    response.body as RawPagedResponse<ServiceProviderResponse>;
+                expect(response.status).toBe(200);
+                expect(body.total).toBe(4);
+                expect(body.items.map((item: ServiceProviderResponse) => item.id)).toEqual(
+                    expect.arrayContaining([
+                        ...landServiceProviders.map((sp: ServiceProvider<true>) => sp.id),
+                        rootServiceProvider.id,
+                    ]),
+                );
+                expect(body.items.map((item: ServiceProviderResponse) => item.id)).not.toContain(
+                    schuleServiceProvider.id,
+                );
+            });
+
+            it('should filter by searchStr', async () => {
+                const { landOrganisation }: { landOrganisation: Organisation<true> } = await setup();
+                const matchingServiceProvider: ServiceProvider<true> = await createAndPersistServiceProvider(em, {
+                    providedOnSchulstrukturknoten: landOrganisation.id,
+                    name: 'Matching Provider',
+                });
+
+                const params: ManageableLandRootServiceProvidersQueryParams = { searchStr: 'Matching' };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(params)
+                    .send();
+
+                const body: RawPagedResponse<ServiceProviderResponse> =
+                    response.body as RawPagedResponse<ServiceProviderResponse>;
+                expect(response.status).toBe(200);
+                expect(body.total).toBe(1);
+                expect(body.items[0]!.id).toBe(matchingServiceProvider.id);
+            });
+
+            it('should respect limit and return correct pageTotal', async () => {
+                await setup();
+
+                const params: ManageableLandRootServiceProvidersQueryParams = { limit: 2, offset: 0 };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(params)
+                    .send();
+
+                const body: RawPagedResponse<ServiceProviderResponse> =
+                    response.body as RawPagedResponse<ServiceProviderResponse>;
+                expect(response.status).toBe(200);
+                expect(body.total).toBe(3);
+                expect(body.limit).toBe(2);
+                expect(body.offset).toBe(0);
+                expect(body.items).toHaveLength(2);
+            });
+
+            it('should return the correct page when offset is applied', async () => {
+                const {
+                    serviceProviders: [, , thirdServiceProvider],
+                }: { serviceProviders: ServiceProvider<true>[] } = await setup();
+
+                const params: ManageableLandRootServiceProvidersQueryParams = { limit: 1, offset: 2 };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(params)
+                    .send();
+
+                const body: RawPagedResponse<ServiceProviderResponse> =
+                    response.body as RawPagedResponse<ServiceProviderResponse>;
+                expect(response.status).toBe(200);
+                expect(body.total).toBe(3);
+                expect(body.offset).toBe(2);
+                expect(body.items).toHaveLength(1);
+                expect(body.items[0]!.id).toBe(thirdServiceProvider!.id);
+            });
+        });
+
+        describe('when user does not have permission', () => {
+            it('should return 404', async () => {
+                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [faker.string.uuid()],
+                });
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .send();
+
+                expect(response.status).toBe(404);
+            });
         });
     });
 });
