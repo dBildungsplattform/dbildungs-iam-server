@@ -458,12 +458,14 @@ export class RolleController {
         @Query() queryParams: FindRollenerweiterungQueryParams,
         @Permissions() permissions: IPersonPermissions,
     ): Promise<ServiceProviderResponse[]> {
-        const isAuthorized: boolean = await permissions.hasSystemrechtAtOrganisation(
-            queryParams.organisationId,
-            RollenSystemRecht.getByName(RollenSystemRechtEnum.ROLLEN_ERWEITERN),
-        );
-        if (!isAuthorized) {
-            throw new EntityNotFoundError('Rolle', params.rolleId);
+        const rollenerweiterungenResult: Result<Rollenerweiterung<true>[], MissingPermissionsError> =
+            await this.rollenerweiterungRepo.findManyByOrganisationAndRolleAuthorized(
+                queryParams.organisationId,
+                params.rolleId,
+                permissions,
+            );
+        if (!rollenerweiterungenResult.ok) {
+            throw rollenerweiterungenResult.error;
         }
 
         const rolle: Rolle<true> | null | undefined = await this.rolleRepo.findById(params.rolleId);
@@ -471,13 +473,8 @@ export class RolleController {
             throw new EntityNotFoundError('Rolle', params.rolleId);
         }
 
-        const rollenerweiterungen: Rollenerweiterung<true>[] =
-            await this.rollenerweiterungRepo.findManyByOrganisationAndRolle([
-                { organisationId: queryParams.organisationId, rolleId: params.rolleId },
-            ]);
-
         const serviceProviders: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
-            rollenerweiterungen.map((re: Rollenerweiterung<true>) => re.serviceProviderId),
+            rollenerweiterungenResult.value.map((re: Rollenerweiterung<true>) => re.serviceProviderId),
         );
 
         return Array.from(serviceProviders.values()).map(

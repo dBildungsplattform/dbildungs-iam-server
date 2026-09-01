@@ -27,6 +27,7 @@ import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { RollenerweiterungEntity } from '../entity/rollenerweiterung.entity.js';
 import { NoRedundantRollenerweiterungError } from '../specification/error/no-redundant-rollenerweiterung.error.js';
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
@@ -1020,6 +1021,30 @@ describe('RollenerweiterungRepo', () => {
                     ),
                 ).toHaveLength(3);
             });
+        });
+
+        test('should return rollenerweiterungen when authorized for the organisation', async () => {
+            permissionMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const result: Result<Rollenerweiterung<true>[], MissingPermissionsError> =
+                await sut.findManyByOrganisationAndRolleAuthorized(organisations[0]!.id, rollen[0]!.id, permissionMock);
+
+            expectOkResult(result);
+            expect(result.value).toHaveLength(3);
+            expect(permissionMock.hasSystemrechtAtOrganisation).toHaveBeenCalledWith(
+                organisations[0]!.id,
+                RollenSystemRecht.ROLLEN_ERWEITERN,
+            );
+        });
+
+        test('should return MissingPermissionsError when not authorized for the organisation', async () => {
+            permissionMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+            const result: Result<Rollenerweiterung<true>[], MissingPermissionsError> =
+                await sut.findManyByOrganisationAndRolleAuthorized(organisations[0]!.id, rollen[0]!.id, permissionMock);
+
+            expectErrResult(result);
+            expect(result.error).toBeInstanceOf(MissingPermissionsError);
         });
     });
 
