@@ -165,6 +165,7 @@ export class RolleController {
                 queryParams.rolleIds,
                 queryParams.merkmale,
                 queryParams.rollenarten,
+                queryParams.serviceProviderIds,
             );
         }
         const [rollen, total]: [Rolle<true>[], number] = rollenAndTotal;
