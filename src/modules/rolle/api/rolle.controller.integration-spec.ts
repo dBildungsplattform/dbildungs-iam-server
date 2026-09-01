@@ -1055,6 +1055,55 @@ describe('Rolle API', () => {
             ).toBe(true);
         });
 
+        it('should return rollen filtered by serviceProviderIds', async () => {
+            const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const sp1: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+            const sp2: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+
+            await Promise.all([
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        serviceProviderIds: [sp1.id],
+                        istTechnisch: false,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        serviceProviderIds: [sp1.id],
+                        istTechnisch: false,
+                    }),
+                ),
+                rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: orga.id,
+                        serviceProviderIds: [sp2.id],
+                        istTechnisch: false,
+                    }),
+                ),
+            ]);
+
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle`)
+                .query({
+                    serviceProviderIds: sp1.id,
+                })
+                .send();
+
+            expect(response.status).toBe(200);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(2);
+            expect(
+                pagedResponse.items.every((r: RolleWithServiceProvidersResponse) =>
+                    r.serviceProviders.some((sp: { id: string; name: string }) => sp.id === sp1.id),
+                ),
+            ).toBe(true);
+        });
+
         it('should return rollen filtered by rollenarten without operation right', async () => {
             const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
 

@@ -69,6 +69,7 @@ import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider-body.params.js';
 import { CreateServiceProviderResponse } from './create-service-provider.response.js';
 import { FindServiceProviderForRolleQueryParams } from './find-service-provider-for-rolle-query.params.js';
+import { ManageableLandRootServiceProvidersQueryParams } from './manageable-land-root-service-providers-query.params.js';
 import { ManageableServiceProviderListEntryResponse } from './manageable-service-provider-list-entry.response.js';
 import { ManageableServiceProviderSimpleListEntryResponse } from './manageable-service-provider-simple-list-entry.response.js';
 import { ManageableServiceProviderResponse } from './manageable-service-provider.response.js';
@@ -342,6 +343,45 @@ export class ProviderController {
                         manageableServiceProviderWithReferencedObjects,
                     ),
             ),
+        });
+    }
+
+    @Get('manageable-land-root')
+    @UseGuards(StepUpGuard)
+    @ApiOperation({
+        description: 'Get service-providers provided at LAND or ROOT level. Requires root-level ANGEBOTE_VERWALTEN.',
+    })
+    @ApiOkResponsePaginated(ServiceProviderResponse, {
+        description: 'The service providers were successfully returned.',
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get service providers.' })
+    @ApiNotFoundResponse({ description: 'Root-level ANGEBOTE_VERWALTEN permission required.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting service providers.' })
+    public async getManageableLandRootServiceProviders(
+        @Permissions() permissions: IPersonPermissions,
+        @Query() params: ManageableLandRootServiceProvidersQueryParams,
+    ): Promise<RawPagedResponse<ServiceProviderResponse>> {
+        const result: Result<
+            Counted<ServiceProvider<true>>,
+            MissingPermissionsError
+        > = await this.serviceProviderService.findManageableLandRoot(
+            permissions,
+            params.searchStr,
+            params.limit,
+            params.offset,
+        );
+
+        if (!result.ok) {
+            throw result.error;
+        }
+
+        const [serviceProviders, total]: Counted<ServiceProvider<true>> = result.value;
+
+        return new RawPagedResponse({
+            offset: params.offset ?? 0,
+            limit: params.limit ?? total,
+            total,
+            items: serviceProviders.map((sp: ServiceProvider<true>) => new ServiceProviderResponse(sp)),
         });
     }
 

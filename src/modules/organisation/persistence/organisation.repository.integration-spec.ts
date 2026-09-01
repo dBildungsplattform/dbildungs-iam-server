@@ -2466,4 +2466,74 @@ describe('OrganisationRepository', () => {
             });
         });
     });
+
+    describe('findIdsByTypen', () => {
+        describe('when no types are provided', () => {
+            it('should return empty array', async () => {
+                const result: OrganisationID[] = await sut.findIdsByTypen([]);
+
+                expect(result).toEqual([]);
+            });
+        });
+
+        describe('when types are provided', () => {
+            const setup = async (): Promise<{
+                schule: OrganisationEntity;
+                traeger: OrganisationEntity;
+                klasse: OrganisationEntity;
+            }> => {
+                const schule: OrganisationEntity = Object.assign(
+                    new OrganisationEntity(),
+                    DoFactory.createOrganisation<true>(true, { typ: OrganisationsTyp.SCHULE }),
+                );
+                const traeger: OrganisationEntity = Object.assign(
+                    new OrganisationEntity(),
+                    DoFactory.createOrganisation<true>(true, { typ: OrganisationsTyp.TRAEGER }),
+                );
+                const klasse: OrganisationEntity = Object.assign(
+                    new OrganisationEntity(),
+                    DoFactory.createOrganisation<true>(true, { typ: OrganisationsTyp.KLASSE }),
+                );
+                await em.persist([schule, traeger, klasse]).flush();
+                em.clear();
+
+                return { schule, traeger, klasse };
+            };
+
+            it('should return ids of organisations matching the given type', async () => {
+                const { schule, traeger }: { schule: OrganisationEntity; traeger: OrganisationEntity } = await setup();
+
+                const result: OrganisationID[] = await sut.findIdsByTypen([OrganisationsTyp.SCHULE]);
+
+                expect(result).toContain(schule.id);
+                expect(result).not.toContain(traeger.id);
+            });
+
+            it('should return ids for multiple types', async () => {
+                const {
+                    schule,
+                    traeger,
+                    klasse,
+                }: { schule: OrganisationEntity; traeger: OrganisationEntity; klasse: OrganisationEntity } =
+                    await setup();
+
+                const result: OrganisationID[] = await sut.findIdsByTypen([
+                    OrganisationsTyp.SCHULE,
+                    OrganisationsTyp.TRAEGER,
+                ]);
+
+                expect(result).toContain(schule.id);
+                expect(result).toContain(traeger.id);
+                expect(result).not.toContain(klasse.id);
+            });
+
+            it('should return empty array when no organisations match the given type', async () => {
+                const { klasse }: { klasse: OrganisationEntity } = await setup();
+
+                const result: OrganisationID[] = await sut.findIdsByTypen([OrganisationsTyp.SCHULE]);
+
+                expect(result).not.toContain(klasse.id);
+            });
+        });
+    });
 });

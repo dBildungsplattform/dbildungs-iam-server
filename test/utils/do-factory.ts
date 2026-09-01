@@ -22,11 +22,13 @@ import { Rollenerweiterung } from '../../src/modules/rolle/domain/rollenerweiter
 import { RollenSystemRecht } from '../../src/modules/rolle/domain/systemrecht.js';
 import {
     ServiceProviderKategorie,
+    ServiceProviderMerkmal,
     ServiceProviderSystem,
     ServiceProviderTarget,
 } from '../../src/modules/service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
+
 // <-- Not part of the domain, need to be fixed! -->
 import { EmailAddress as MicroserviceEmailAddress } from '../../src/email/modules/core/domain/email-address.js';
 import { EmailAddressStatusEnum } from '../../src/email/modules/core/persistence/email-address-status.entity.js';
@@ -170,8 +172,8 @@ export class DoFactory {
             providedOnSchulstrukturknoten: faker.string.uuid(),
             externalSystem: ServiceProviderSystem.NONE,
             requires2fa: true,
-            merkmale: [],
-            rollenartenWhitelist: [],
+            merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+            rollenartenWhitelist: [RollenArt.LEHR],
         };
         return Object.assign(
             Object.create(ServiceProvider.prototype) as ServiceProvider<boolean>,
