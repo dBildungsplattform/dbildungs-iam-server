@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMaxSize, ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 
 import { PagedQueryParams } from '../../../shared/paging/index.js';
-import { OrganisationID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 import { RollenArt, RollenArtTypName, RollenMerkmal, RollenMerkmalTypName } from '../domain/rolle.enums.js';
 import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
@@ -110,4 +110,16 @@ export class FindRollenQueryParams extends PagedQueryParams {
         description: 'Filter roles by merkmal.',
     })
     public readonly merkmale?: RollenMerkmal[];
+
+    @IsOptional()
+    @IsUUID(undefined, { each: true })
+    @TransformToArray()
+    @ArrayUnique()
+    @ApiProperty({
+        description: 'Filter roles by service provider ids.',
+        required: false,
+        nullable: true,
+        isArray: true,
+    })
+    public readonly serviceProviderIds?: ServiceProviderID[];
 }

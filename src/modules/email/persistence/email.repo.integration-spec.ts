@@ -152,6 +152,8 @@ describe('EmailRepo', () => {
             case EmailAddressStatus.REQUESTED:
                 email.value.request();
                 break;
+            default:
+                break;
         }
         const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
         assert(savedEmail instanceof EmailAddress);
