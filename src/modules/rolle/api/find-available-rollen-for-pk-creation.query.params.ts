@@ -35,6 +35,7 @@ export class FindAvailableRollenForPKCreationQueryParams extends PagedQueryParam
     })
     public readonly rolleName?: string;
 
+    @TransformToArray()
     @ArrayUnique()
     @IsUUID(undefined, { each: true })
     @IsOptional()
