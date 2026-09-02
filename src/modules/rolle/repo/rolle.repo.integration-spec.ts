@@ -583,6 +583,55 @@ describe('RolleRepo', () => {
             expect(rolleResult[0]!.merkmale).toContain(RollenMerkmal.BEFRISTUNG_PFLICHT);
             expect(rolleResult[1]!.merkmale).toContain(RollenMerkmal.BEFRISTUNG_PFLICHT);
         });
+
+        it('should filter rollen by serviceProviderIds', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const organisationId: OrganisationID = organisation.id;
+            const sp1: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+            const sp2: ServiceProvider<true> = await createAndPersistServiceProvider(em);
+
+            await Promise.all([
+                sut.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisationId,
+                        serviceProviderIds: [sp1.id],
+                    }),
+                ),
+                sut.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisationId,
+                        serviceProviderIds: [sp1.id],
+                    }),
+                ),
+                sut.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisationId,
+                        serviceProviderIds: [sp2.id],
+                    }),
+                ),
+            ]);
+
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
+
+            const [rolleResult, total]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                [],
+                false,
+                undefined,
+                10,
+                0,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                [sp1.id],
+            );
+
+            expect(rolleResult).toHaveLength(2);
+            expect(total).toBe(2);
+            expect(rolleResult.every((r: Rolle<true>) => r.serviceProviderIds.includes(sp1.id))).toBe(true);
+        });
     });
 
     describe('findByName', () => {

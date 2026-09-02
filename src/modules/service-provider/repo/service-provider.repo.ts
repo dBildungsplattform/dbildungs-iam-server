@@ -346,11 +346,40 @@ export class ServiceProviderRepo {
                 ServiceProviderEntity,
                 { providedOnSchulstrukturknoten: { $in: organisationIds } },
                 {
-                    populate: ['merkmale', 'rollenartenWhitelist'],
                     exclude,
                 },
             )
         ).map(mapEntityToAggregate);
+    }
+
+    public async findBySchulstrukturknotenPaginated(
+        organisationIds: Array<OrganisationID>,
+        searchQuery?: string,
+        limit?: number,
+        offset?: number,
+    ): Promise<Counted<ServiceProvider<true>>> {
+        const where: FilterQuery<ServiceProviderEntity> = {
+            providedOnSchulstrukturknoten: { $in: organisationIds },
+        };
+
+        if (searchQuery) {
+            const escapedPercentAndUnderscoreWildcards: string = searchQuery.replace(/[%_\\]/g, '\\$&');
+            where.name = { $ilike: `%${escapedPercentAndUnderscoreWildcards}%` };
+        }
+
+        const exclude: readonly ['logo'] | undefined = ['logo'];
+        const [entities, count]: Counted<ServiceProviderEntity> = await this.em.findAndCount(
+            ServiceProviderEntity,
+            where,
+            {
+                exclude,
+                limit,
+                offset,
+                orderBy: { name: 'ASC', id: 'ASC' },
+            },
+        );
+
+        return [entities.map(mapEntityToAggregate), count];
     }
 
     // TODO check permissions. Currently required by db-seed. Refactor once we have permissions for seeding.
@@ -418,16 +447,6 @@ export class ServiceProviderRepo {
 
         await this.em.remove(entity).flush();
         return Ok();
-    }
-
-    public async deleteById(id: string): Promise<boolean> {
-        const deletedServiceProviders: number = await this.em.nativeDelete(ServiceProviderEntity, { id });
-        return deletedServiceProviders > 0;
-    }
-
-    public async deleteByName(name: string): Promise<boolean> {
-        const deletedServiceProviders: number = await this.em.nativeDelete(ServiceProviderEntity, { name: name });
-        return deletedServiceProviders > 0;
     }
 
     public async getPermissionsForServiceProvider(
