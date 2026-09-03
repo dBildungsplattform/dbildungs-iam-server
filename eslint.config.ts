@@ -61,6 +61,13 @@ const customRules: Partial<Linter.RulesRecord> = {
         },
     ],
     '@typescript-eslint/no-empty-interface': ['error', { allowSingleExtends: true }],
+    'no-restricted-syntax': [
+        'warn',
+        {
+            selector: "NewExpression[callee.name='Error']",
+            message: 'Use a DomainError implementation instead of `new Error(...)`.',
+        },
+    ],
 };
 
 export default defineConfig(
