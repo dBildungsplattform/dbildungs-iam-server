@@ -42,8 +42,8 @@ import {
 } from '../domain/user-extenaldata.workflow.js';
 import { UserExternaldataService } from '../domain/user-externaldata.service.js';
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
-import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { UserExternalDataV2Response } from './externaldata/user-externaldata-v2.response.js';
+import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { KeycloakInternalController } from './keycloakinternal.controller.js';
 
 describe('KeycloakInternalController', () => {
@@ -555,9 +555,7 @@ describe('KeycloakInternalController', () => {
                     rolleId: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
-                    serviceProvider: [
-                        createMock<ServiceProvider<true>>(ServiceProvider<true>, { keycloakClient }),
-                    ],
+                    serviceProvider: [createMock<ServiceProvider<true>>(ServiceProvider<true>, { keycloakClient })],
                 },
                 {
                     pkId: faker.string.uuid(),

@@ -10,16 +10,16 @@ import {
     ExternalPkData,
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { UserExternalData, UserExternaldataService } from '../domain/user-externaldata.service.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternaldataWorkflowAggregate } from '../domain/user-extenaldata.workflow.js';
+import { UserExternalData, UserExternaldataService } from '../domain/user-externaldata.service.js';
 import { AccessApiKeyGuard } from './access.apikey.guard.js';
 import { OxParams } from './externaldata/user-externaldata-ox.response.js';
-import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
-import { Public } from './public.decorator.js';
-import { UserExternalDataBodyParams } from './externaldata/user-externaldata.body.params.js';
 import { UserExternalDataV2BodyParams } from './externaldata/user-externaldata-v2.body.params.js';
 import { UserExternalDataV2Response } from './externaldata/user-externaldata-v2.response.js';
+import { UserExternalDataBodyParams } from './externaldata/user-externaldata.body.params.js';
+import { UserExternalDataResponse } from './externaldata/user-externaldata.response.js';
+import { Public } from './public.decorator.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -81,10 +81,6 @@ export class KeycloakInternalController {
         return userExternalDataResponse;
     }
 
-    /**
-     * Version 2: prüft die Berechtigung anhand des übergebenen keycloakClient und liefert nur die
-     * Schulzuordnungen und Rollenart zurück, für die eine Berechtigung auf diesem Angebot besteht.
-     **/
     @UseInterceptors(ExternalDataCacheInterceptor)
     @Version('2')
     @Post('externaldata')
