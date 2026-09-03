@@ -30,12 +30,18 @@ export class UserExternalDataV2Response {
         this.vorname = userExternalData.vorname;
         this.nachname = userExternalData.nachname;
         this.rollenart = userExternalData.rollenart;
-        this.personenkontexte = userExternalData.personenkontexte.map(
+        this.personenkontexte = this.mapToPersonenkontexte(userExternalData.personenkontexte);
+        this.emailAdresse = userExternalData.emailAdresse;
+        this.oxLoginId = userExternalData.oxLoginId;
+    }
+
+    private mapToPersonenkontexte(
+        personenkontexte: { dienststellennr: string; rolleId: string }[],
+    ): UserExternalDataV2PersonenkontextResponse[] {
+        return personenkontexte.map(
             (pk: { dienststellennr: string; rolleId: string }) =>
                 new UserExternalDataV2PersonenkontextResponse(pk.dienststellennr, pk.rolleId),
         );
-        this.emailAdresse = userExternalData.emailAdresse;
-        this.oxLoginId = userExternalData.oxLoginId;
     }
 
     public static createNew(userExternalData: UserExternalData): UserExternalDataV2Response {
