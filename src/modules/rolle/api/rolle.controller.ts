@@ -32,7 +32,13 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/index.js';
-import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import {
+    ApiOkResponsePaginated,
+    Paged,
+    PagedResponse,
+    PagingHeadersObject,
+    RawPagedResponse,
+} from '../../../shared/paging/index.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
@@ -221,10 +227,8 @@ export class RolleController {
 
     @Get('for-person-administration')
     @ApiOperation({ description: 'List rollen available for person administration.' })
-    @ApiOkResponse({
+    @ApiOkResponsePaginated(RolleResponse, {
         description: 'The rollen were successfully returned',
-        type: [RolleResponse],
-        headers: PagingHeadersObject,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available rollen for person administration.' })
     @ApiForbiddenResponse({
@@ -236,7 +240,7 @@ export class RolleController {
     public async findRollenAvailableForPersonAdministration(
         @Query() queryParams: FindRolleForPersonAdministrationQueryParams,
         @Permissions() permissions: IPersonPermissions,
-    ): Promise<PagedResponse<RolleResponse>> {
+    ): Promise<RawPagedResponse<RolleResponse>> {
         const [rollen, total]: [Rolle<true>[], number] =
             await this.rolleFindService.findRollenAvailableForPersonAdministration({
                 permissions,
@@ -249,7 +253,7 @@ export class RolleController {
                 ),
             });
 
-        return new PagedResponse<RolleResponse>({
+        return new RawPagedResponse<RolleResponse>({
             total,
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? rollen.length,
