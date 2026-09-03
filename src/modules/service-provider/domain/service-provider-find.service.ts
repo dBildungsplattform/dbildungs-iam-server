@@ -10,6 +10,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProvider } from './service-provider.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 @Injectable()
 export class ServiceProviderFindService {
@@ -21,6 +22,7 @@ export class ServiceProviderFindService {
     public async findServiceProvidersForRolleBySchulstrukturknotenAuthorized(
         permissions: IPersonPermissions,
         schulstrukturknotenId: OrganisationID,
+        rollenArten?: RollenArt[],
     ): Promise<Result<ServiceProvider<true>[], DomainError>> {
         const hasPermission: boolean = await permissions.hasSystemrechteAtOrganisation(schulstrukturknotenId, [
             RollenSystemRecht.ROLLEN_VERWALTEN,
@@ -35,6 +37,14 @@ export class ServiceProviderFindService {
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.findBySchulstrukturknoten(
             parentOrganisations.map((organisation: Organisation<true>) => organisation.id),
         );
+
+        if (rollenArten && rollenArten.length > 0) {
+            const filteredServiceProviders: ServiceProvider<true>[] = serviceProviders.filter(
+                (sp: ServiceProvider<true>) =>
+                    sp.rollenartenWhitelist.some((ra: RollenArt) => rollenArten.includes(ra)),
+            );
+            return Ok(filteredServiceProviders);
+        }
 
         return Ok(serviceProviders);
     }
