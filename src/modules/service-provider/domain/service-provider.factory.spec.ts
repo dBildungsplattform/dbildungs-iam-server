@@ -84,6 +84,7 @@ describe('ServiceProviderFactory', () => {
                     ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
                 ],
                 [],
+                undefined,
             );
             expectOkResult(serviceProvider);
             expect(serviceProvider.value.merkmale).toEqual([]);
@@ -109,6 +110,7 @@ describe('ServiceProviderFactory', () => {
                 example.vidisAngebotId,
                 example.merkmale,
                 example.rollenartenWhitelist,
+                example.keycloakClient,
             );
             expectErrResult(serviceProvider);
             expect(serviceProvider.error).toBeInstanceOf(InvalidLogoCombinationError);
@@ -165,6 +167,7 @@ describe('ServiceProviderFactory', () => {
                     ServiceProviderMerkmal.ANBIETEN_IN_SCHULISCHER_ROLLENVERWALTUNG,
                 ],
                 [],
+                undefined,
             );
             expectOkResult(serviceProvider);
             expect(serviceProvider.value.merkmale).toEqual([]);
@@ -187,6 +190,7 @@ describe('ServiceProviderFactory', () => {
                 example.vidisAngebotId,
                 example.merkmale,
                 example.rollenartenWhitelist,
+                example.keycloakClient,
             );
             expectErrResult(serviceProvider);
             expect(serviceProvider.error).toBeInstanceOf(InvalidLogoCombinationError);
