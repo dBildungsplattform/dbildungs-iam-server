@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { Err, Ok } from '../../../shared/util/result.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderMerkmal,
@@ -7,8 +9,6 @@ import {
     ServiceProviderTarget,
 } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
-import { Err, Ok } from '../../../shared/util/result.js';
-import { InvalidLogoCombinationError } from './errors/invalid-logo-combination.error.js';
 
 @Injectable()
 export class ServiceProviderFactory {
