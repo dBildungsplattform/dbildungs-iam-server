@@ -44,10 +44,6 @@ export type UserExternalData = OptionalEmailData & {
     personenkontexte: Pick<PermittedPersonenkontext, 'dienststellennr' | 'rolleId'>[];
 };
 
-/**
- * Provides the external data for a person, scoped to a single Angebot (identified by its Keycloak-Client),
- * returning only the Schulzuordnungen and Rollenart the person is actually permitted for on that Angebot.
- */
 @Injectable()
 export class UserExternaldataService {
     public constructor(
