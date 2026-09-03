@@ -734,9 +734,10 @@ describe('RolleFindService', () => {
                 permissions: permissionsMock,
                 systemrecht: RollenSystemRecht.PERSONEN_ANLEGEN,
                 organisationId: schule.id,
-                rollenartOfUser: RollenArt.EXTERN,
+                rollenartOfUser: RollenArt.SYSADMIN,
             });
 
+            expect(rolleRepoMock.findRollenAvailableForPersonenkontextCreation).not.toHaveBeenCalled();
             expect(result).toEqual([[], 0]);
         });
 
