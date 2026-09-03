@@ -160,6 +160,7 @@ export class ProviderController {
             angeboteAndTotal = await this.serviceProviderService.findAllowedProvidersForRollenerweiterungAtOrga(
                 queryParams.organisationId,
                 permissions,
+                queryParams.rollenArten,
             );
         }
 
