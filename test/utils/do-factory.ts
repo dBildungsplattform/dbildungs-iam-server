@@ -174,6 +174,7 @@ export class DoFactory {
             requires2fa: true,
             merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
             rollenartenWhitelist: [RollenArt.LEHR],
+            keycloakClient: faker.string.alphanumeric(10),
         };
         return Object.assign(
             Object.create(ServiceProvider.prototype) as ServiceProvider<boolean>,

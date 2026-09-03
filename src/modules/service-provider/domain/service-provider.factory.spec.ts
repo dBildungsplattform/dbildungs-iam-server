@@ -55,6 +55,7 @@ describe('ServiceProviderFactory', () => {
                 example.vidisAngebotId,
                 example.merkmale,
                 example.rollenartenWhitelist,
+                example.keycloakClient,
             );
             expectOkResult(serviceProvider);
             expect(serviceProvider.value.rollenartenWhitelist).toEqual(example.rollenartenWhitelist);
@@ -138,6 +139,7 @@ describe('ServiceProviderFactory', () => {
                 example.vidisAngebotId,
                 example.merkmale,
                 example.rollenartenWhitelist,
+                example.keycloakClient,
             );
             expectOkResult(serviceProvider);
             expect(serviceProvider.value.rollenartenWhitelist).toEqual(example.rollenartenWhitelist);
