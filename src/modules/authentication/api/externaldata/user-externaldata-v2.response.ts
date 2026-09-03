@@ -1,0 +1,44 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
+import { UserExternalData } from '../../domain/user-externaldata.service.js';
+import { UserExternalDataV2PersonenkontextResponse } from './user-externaldata-v2-pk.response.js';
+
+export class UserExternalDataV2Response {
+    @ApiProperty()
+    public personId: string;
+
+    @ApiProperty()
+    public vorname: string;
+
+    @ApiProperty()
+    public nachname: string;
+
+    @ApiProperty({ enum: RollenArt })
+    public rollenart: RollenArt;
+
+    @ApiProperty({ type: [UserExternalDataV2PersonenkontextResponse] })
+    public personenkontexte: UserExternalDataV2PersonenkontextResponse[];
+
+    @ApiPropertyOptional()
+    public emailAdresse?: string;
+
+    @ApiPropertyOptional()
+    public oxLoginId?: string;
+
+    private constructor(userExternalData: UserExternalData) {
+        this.personId = userExternalData.personId;
+        this.vorname = userExternalData.vorname;
+        this.nachname = userExternalData.nachname;
+        this.rollenart = userExternalData.rollenart;
+        this.personenkontexte = userExternalData.personenkontexte.map(
+            (pk: { dienststellennr: string; rolleId: string }) =>
+                new UserExternalDataV2PersonenkontextResponse(pk.dienststellennr, pk.rolleId),
+        );
+        this.emailAdresse = userExternalData.emailAdresse;
+        this.oxLoginId = userExternalData.oxLoginId;
+    }
+
+    public static createNew(userExternalData: UserExternalData): UserExternalDataV2Response {
+        return new UserExternalDataV2Response(userExternalData);
+    }
+}
