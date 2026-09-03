@@ -40,6 +40,7 @@ describe('EmailDomainRepo', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
+        orm.em.clear();
     });
 
     it('should be defined', () => {
@@ -63,6 +64,7 @@ describe('EmailDomainRepo', () => {
 
         beforeEach(async () => {
             createdDomain = await createAndSaveDomain();
+            orm.em.clear();
         });
 
         it('should return true if email domain exists', async () => {
@@ -92,6 +94,8 @@ describe('EmailDomainRepo', () => {
             });
             const result: EmailDomain<true> | DomainError = await sut.save(mailToCreate);
 
+            orm.em.clear();
+
             expect(result).toBeDefined();
             expect(result).not.toBeInstanceOf(DomainError);
             expect((result as EmailDomain<true>).domain).toBe(domainName);
@@ -117,11 +121,15 @@ describe('EmailDomainRepo', () => {
                 created.spshServiceProviderId,
             );
 
+            orm.em.clear();
+
             const result: EmailDomain<true> | DomainError = await sut.save(updatedDomain);
 
             expect(result).toBeDefined();
             expect(result).not.toBeInstanceOf(DomainError);
             expect((result as EmailDomain<true>).domain).toBe(updatedDomainValue);
+
+            orm.em.clear();
 
             const persisted: Option<EmailDomain<true>> = await sut.findBySpshServiceProviderId(
                 created.spshServiceProviderId,
