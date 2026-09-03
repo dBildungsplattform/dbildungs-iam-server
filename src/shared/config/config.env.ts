@@ -1,3 +1,5 @@
+import { isEnum } from 'class-validator';
+import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 import { CronConfig } from './cron.config.js';
 import { DbConfig } from './db.config.js';
 import { EmailMicroserviceConfig } from './email-microservice.config.js';
@@ -151,7 +153,9 @@ export default (): Config => ({
         SSL_KEY_PATH: process.env['KAFKA_SSL_KEY_PATH'],
     },
     PORTAL: {
-        LIMITED_ROLLENART_ALLOWLIST: envToStringArray('PORTAL_LIMITED_ROLLENART_ALLOWLIST'),
+        LIMITED_ROLLENART_ALLOWLIST: envToStringArray('PORTAL_LIMITED_ROLLENART_ALLOWLIST')?.filter(
+            (rollenart: string): rollenart is RollenArt => isEnum(RollenArt, rollenart),
+        ),
     },
     CRON: {
         PERSON_WITHOUT_ORG_LIMIT: envToOptionalInteger('CRON_PERSON_WITHOUT_ORG_LIMIT'),

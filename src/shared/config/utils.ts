@@ -1,5 +1,3 @@
-import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
-
 /**
  * Reads the environment variable and returns an optional boolean.
  * Depending on the input:
@@ -69,22 +67,4 @@ export function envToStringArray(key: string): string[] | undefined {
     }
 
     return value.split(',').map((item: string) => item.trim());
-}
-
-/**
- * Maps an array of strings to an array of RollenArt enums.
- * Filters out any strings that are not valid RollenArt values.
- *
- * @param rollenarten Array of strings representing RollenArt
- * @returns Array of RollenArt enums, empty if none are valid
- */
-export function mapStringsToRollenArt(rollenarten: string[]): RollenArt[] {
-    const rollenartenSet: Set<RollenArt> = new Set(Object.values(RollenArt));
-    const validatedRollenarten: Set<RollenArt> = new Set();
-    for (const unvalidated of rollenarten) {
-        if (rollenartenSet.has(unvalidated as RollenArt)) {
-            validatedRollenarten.add(unvalidated as RollenArt);
-        }
-    }
-    return Array.from(validatedRollenarten);
 }

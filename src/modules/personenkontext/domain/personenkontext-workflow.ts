@@ -1,7 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { intersection } from 'lodash-es';
 import { PortalConfig } from '../../../shared/config/portal.config.js';
-import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
@@ -294,12 +293,10 @@ export class PersonenkontextWorkflowAggregate {
 
             const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
 
-            const allowedRollenArten: RollenArt[] | undefined = mapStringsToRollenArt(
-                portalConfig.LIMITED_ROLLENART_ALLOWLIST || [],
-            );
+            const allowedRollenArten: RollenArt[] = portalConfig.LIMITED_ROLLENART_ALLOWLIST;
 
             for (const rolle of rollen.values()) {
-                const rollenArtNotAllowed: boolean = !allowedRollenArten?.includes(rolle.rollenart);
+                const rollenArtNotAllowed: boolean = !allowedRollenArten.includes(rolle.rollenart);
                 if (includesMPTRollen) {
                     // implies user has RollenSystemRecht.MPT_ROLLEN_VERWALTEN
                     if (rollenArtNotAllowed && !rolle.hasMerkmal(RollenMerkmal.MPT_ROLLE)) {

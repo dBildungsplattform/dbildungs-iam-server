@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { intersection } from 'lodash-es';
 import { ServerConfig } from '../../../shared/config/index.js';
 import { PortalConfig } from '../../../shared/config/portal.config.js';
-import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { intersectPermittedAndRequestedOrgas, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
@@ -436,7 +435,7 @@ export class RolleFindService {
 
     private getLimitedRollenarten(): Array<RollenArt> {
         const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
-        return mapStringsToRollenArt(portalConfig.LIMITED_ROLLENART_ALLOWLIST ?? []);
+        return portalConfig.LIMITED_ROLLENART_ALLOWLIST;
     }
 
     private async resolveOrganisationBounds(
