@@ -165,6 +165,7 @@ describe('PersonRepository Integration', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
+        orm.em.clear();
         vi.resetAllMocks();
     });
 
