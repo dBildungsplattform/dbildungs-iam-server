@@ -182,6 +182,7 @@ export class UserExternaldataService {
             return Err(new MultipleRollenartenError(uniqueRollenarten));
         }
 
+        // safe: permittedPersonenkontexte is non-empty here, so uniqueRollenarten has exactly one entry
         return Ok(uniqueRollenarten[0] as RollenArt);
     }
 
