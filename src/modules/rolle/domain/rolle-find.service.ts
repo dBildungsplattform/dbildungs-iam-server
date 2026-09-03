@@ -425,8 +425,9 @@ export class RolleFindService {
     ): Promise<Array<RollenArt>> {
         const distinctOrganisationsTypen: Array<OrganisationsTyp> =
             await this.organisationRepository.findDistinctOrganisationsTypen(orgaIds);
-        const rollenArtenForOrganisationen: Array<RollenArt> =
-            this.mapOrganisationsTypenToRollenArten(distinctOrganisationsTypen);
+        const rollenArtenForOrganisationen: Array<RollenArt> = Array.from(
+            OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationTypes(distinctOrganisationsTypen),
+        );
         if (selectedRollenArten && selectedRollenArten.length > 0) {
             return intersection(rollenArtenForOrganisationen, selectedRollenArten);
         }
@@ -498,18 +499,6 @@ export class RolleFindService {
         }
 
         return Array.from(organisationIdsWithParents);
-    }
-
-    private mapOrganisationsTypenToRollenArten(organisationenTypen: OrganisationsTyp[]): RollenArt[] {
-        const rollenArten: Set<RollenArt> = new Set();
-        for (const organisationsTyp of organisationenTypen) {
-            const allowedRollenArtenForOrganisationsTyp: Set<RollenArt> =
-                OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(organisationsTyp);
-            for (const rollenArt of allowedRollenArtenForOrganisationsTyp) {
-                rollenArten.add(rollenArt);
-            }
-        }
-        return Array.from(rollenArten);
     }
 
     private async hasMPTRollenVerwaltenPermission(

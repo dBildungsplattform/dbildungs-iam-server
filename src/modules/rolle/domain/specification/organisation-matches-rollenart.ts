@@ -5,7 +5,6 @@ import { RollenArt } from '../rolle.enums.js';
 import { Rolle } from '../rolle.js';
 
 /**
- * Only needs to be checked when referenced organisation is of type KLASSE.
  * Needs to be refactored into a specification
  */
 export class OrganisationMatchesRollenart {
