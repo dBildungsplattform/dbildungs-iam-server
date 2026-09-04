@@ -499,13 +499,14 @@ describe('Provider Controller Test', () => {
                 const spResponse: ServiceProviderResponse[] =
                     await providerController.getAssignableServiceProvidersForRolle(personPermissionsMock, {
                         schulstrukturknotenOfRolle: orga.id,
+                        rollenArten: [RollenArt.LEHR],
                     });
                 expect(spResponse).toBeDefined();
                 expect(spResponse).toBeInstanceOf(Array);
                 expect(spResponse).toHaveLength(1);
                 expect(
                     serviceProviderFindServiceMock.findServiceProvidersForRolleBySchulstrukturknotenAuthorized,
-                ).toHaveBeenCalledWith(personPermissionsMock, orga.id);
+                ).toHaveBeenCalledWith(personPermissionsMock, orga.id, [RollenArt.LEHR]);
             });
         });
 

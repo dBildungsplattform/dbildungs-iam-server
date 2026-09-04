@@ -12,6 +12,7 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderFindService } from './service-provider-find.service.js';
 import { ServiceProvider } from './service-provider.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 describe('ServiceProviderFindService', () => {
     let sut: ServiceProviderFindService;
@@ -89,6 +90,37 @@ describe('ServiceProviderFindService', () => {
 
             expectOkResult(result);
             expect(result.value).toEqual([]);
+            expect(serviceProviderRepoMock.findBySchulstrukturknoten).toHaveBeenCalledWith([parentOrga.id]);
+        });
+
+        it('should filter service providers by rollenArten when provided', async () => {
+            const schulstrukturknotenId: string = faker.string.uuid();
+            const parentOrga: Organisation<true> = DoFactory.createOrganisation(true);
+            const serviceProvider1: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                providedOnSchulstrukturknoten: parentOrga.id,
+                rollenartenWhitelist: [RollenArt.LEHR],
+            });
+            const serviceProvider2: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                providedOnSchulstrukturknoten: parentOrga.id,
+                rollenartenWhitelist: [RollenArt.LERN],
+            });
+
+            permissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true);
+            organisationRepoMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([parentOrga]);
+            serviceProviderRepoMock.findBySchulstrukturknoten.mockResolvedValueOnce([
+                serviceProvider1,
+                serviceProvider2,
+            ]);
+
+            const result: Result<ServiceProvider<true>[], MissingPermissionsError> =
+                await sut.findServiceProvidersForRolleBySchulstrukturknotenAuthorized(
+                    permissionsMock,
+                    schulstrukturknotenId,
+                    [RollenArt.LEHR],
+                );
+
+            expectOkResult(result);
+            expect(result.value).toEqual([serviceProvider1]);
             expect(serviceProviderRepoMock.findBySchulstrukturknoten).toHaveBeenCalledWith([parentOrga.id]);
         });
     });
