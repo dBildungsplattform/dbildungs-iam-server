@@ -150,7 +150,6 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<ServiceProviderResponse>> {
         let angeboteAndTotal: [ServiceProvider<true>[], number] = [[], 0];
-
         if (
             queryParams.systemrechte &&
             queryParams.systemrechte.length === 1 &&
