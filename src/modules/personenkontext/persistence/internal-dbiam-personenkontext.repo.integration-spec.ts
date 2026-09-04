@@ -25,6 +25,7 @@ import { ServiceProviderModule } from '../../service-provider/service-provider.m
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { mapAggregateToPartial, Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
+import { PersonenkontextEntity } from './personenkontext.entity.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -258,6 +259,7 @@ describe('dbiam Personenkontext Repo', () => {
                 });
                 const savedPersonenkontext: Personenkontext<true> = await sut.save(personenkontext);
                 await expect(sut.delete(savedPersonenkontext)).resolves.not.toThrow();
+                expect(await em.count(PersonenkontextEntity, { id: savedPersonenkontext.id })).toBe(0);
             });
         });
     });
@@ -285,6 +287,7 @@ describe('dbiam Personenkontext Repo', () => {
                 const result: boolean = await sut.deleteById(personenKontext.id);
 
                 expect(result).toBeTruthy();
+                expect(await em.count(PersonenkontextEntity, { id: personenKontext.id })).toBe(0);
             });
         });
 
