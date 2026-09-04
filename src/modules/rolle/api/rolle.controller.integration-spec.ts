@@ -62,6 +62,7 @@ import { RolleResponse } from './rolle.response.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { FindRolleForPersonAdministrationQueryParams } from './find-rolle-for-person-administration-query.param.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -159,6 +160,313 @@ describe('Rolle API', () => {
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
         await DatabaseTestModule.clearDatabase(orm);
         vi.clearAllMocks();
+    });
+
+    describe('/GET rolle/for-person-administration', () => {
+        const url: string = '/rolle/for-person-administration';
+        let query: FindRolleForPersonAdministrationQueryParams;
+
+        beforeEach(() => {
+            query = {
+                limit: 25,
+                offset: 0,
+            };
+        });
+
+        describe('when user is landesadmin', () => {
+            let sysadmin: Rolle<true>;
+            let schuladmin: Rolle<true>;
+
+            beforeEach(async () => {
+                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+                sysadmin = await rolleRepo.create(DoFactory.createRolle(false, { rollenart: RollenArt.SYSADMIN }));
+                schuladmin = await rolleRepo.create(DoFactory.createRolle(false, { rollenart: RollenArt.LEIT }));
+            });
+
+            it('should return all rollen for a logged-in user without filter', async () => {
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(query)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        items: expect.arrayContaining([
+                            expect.objectContaining({ name: sysadmin.name }),
+                            expect.objectContaining({ name: schuladmin.name }),
+                        ]) as Array<RolleResponse>,
+                        total: 2,
+                        offset: query.offset ?? 0,
+                        limit: query.limit ?? 25,
+                    }),
+                );
+            });
+
+            it('should return all rollen for a logged-in user based on search filter', async () => {
+                query = {
+                    ...query,
+                    searchStr: sysadmin.name,
+                };
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(query)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        items: [expect.objectContaining({ name: sysadmin.name })],
+                        total: 1,
+                        offset: 0,
+                        limit: 25,
+                    }),
+                );
+            });
+
+            it('should return empty list, if rollen do not exist', async () => {
+                query = {
+                    ...query,
+                    searchStr: 'does not exist',
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(query)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        items: [],
+                        total: 0,
+                        offset: 0,
+                        limit: 25,
+                    }),
+                );
+            });
+
+            it('should return MPT rolle, if requested and permitted', async () => {
+                const mptRolle: Rolle<true> = await rolleRepo.create(
+                    DoFactory.createRolle(false, { rollenart: RollenArt.SORGBER, merkmale: [RollenMerkmal.MPT_ROLLE] }),
+                );
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockImplementation(
+                    (systemrechte: RollenSystemRecht[]) =>
+                        Promise.resolve(systemrechte.includes(RollenSystemRecht.MPT_ROLLEN_VERWALTEN)),
+                );
+                query = {
+                    ...query,
+                    systemrechte: [
+                        RollenSystemRechtEnum.PERSONEN_VERWALTEN,
+                        RollenSystemRechtEnum.MPT_ROLLEN_VERWALTEN,
+                    ],
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(query)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        items: expect.arrayContaining([
+                            expect.objectContaining({ id: mptRolle.id }),
+                        ]) as Array<RolleResponse>,
+                        total: 3,
+                        offset: 0,
+                        limit: 25,
+                    }),
+                );
+            });
+
+            it('should not return MPT rolle, if not requested', async () => {
+                const mptRolle: Rolle<true> = await rolleRepo.create(
+                    DoFactory.createRolle(false, { rollenart: RollenArt.SORGBER, merkmale: [RollenMerkmal.MPT_ROLLE] }),
+                );
+                query = {
+                    ...query,
+                    systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(query)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        items: expect.not.arrayContaining([
+                            expect.objectContaining({ id: mptRolle.id }),
+                        ]) as Array<RolleResponse>,
+                        total: 2,
+                        offset: 0,
+                        limit: 25,
+                    }),
+                );
+            });
+        });
+
+        describe('when user is traegeradmin', () => {
+            it('should return rollen for permitted organisationen', async () => {
+                const parentOrga: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
+                );
+                const schule1: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false, {
+                        administriertVon: parentOrga.id,
+                        typ: OrganisationsTyp.SCHULE,
+                    }),
+                );
+                const schule2: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false, {
+                        administriertVon: parentOrga.id,
+                        typ: OrganisationsTyp.SCHULE,
+                    }),
+                );
+                const rolleOnParent: Rolle<true> = await rolleRepo.create(
+                    DoFactory.createRolle(false, {
+                        rollenart: RollenArt.LEIT,
+                        administeredBySchulstrukturknoten: parentOrga.id,
+                    }),
+                );
+                const rolleOnSchule1: Rolle<true> = await rolleRepo.create(
+                    DoFactory.createRolle(false, {
+                        rollenart: RollenArt.SORGBER,
+                        administeredBySchulstrukturknoten: schule1.id,
+                    }),
+                );
+                const rolleOnSchule2: Rolle<true> = await rolleRepo.create(
+                    DoFactory.createRolle(false, {
+                        rollenart: RollenArt.LEHR,
+                        administeredBySchulstrukturknoten: schule1.id,
+                    }),
+                );
+                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [schule1.id, schule2.id],
+                });
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
+                query = {
+                    ...query,
+                };
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(query)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        items: expect.arrayContaining([
+                            expect.objectContaining({ id: rolleOnParent.id }),
+                            expect.objectContaining({ id: rolleOnSchule1.id }),
+                            expect.objectContaining({ id: rolleOnSchule2.id }),
+                        ]) as Array<RolleResponse>,
+                        total: 3,
+                        offset: 0,
+                        limit: 25,
+                    }),
+                );
+            });
+        });
+
+        describe('when user is schuladmin', () => {
+            let rolleOnParent: Rolle<true>;
+            let rolleOnSelf: Rolle<true>;
+            let orga: Organisation<true>;
+
+            beforeEach(async () => {
+                const parentOrga: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false, { typ: OrganisationsTyp.TRAEGER }),
+                );
+                orga = await organisationRepo.save(
+                    DoFactory.createOrganisation(false, {
+                        administriertVon: parentOrga.id,
+                        typ: OrganisationsTyp.SCHULE,
+                    }),
+                );
+                rolleOnParent = await rolleRepo.create(
+                    DoFactory.createRolle(false, {
+                        rollenart: RollenArt.LEIT,
+                        administeredBySchulstrukturknoten: parentOrga.id,
+                    }),
+                );
+                rolleOnSelf = await rolleRepo.create(
+                    DoFactory.createRolle(false, {
+                        rollenart: RollenArt.LEIT,
+                        administeredBySchulstrukturknoten: orga.id,
+                    }),
+                );
+                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [orga.id],
+                });
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
+            });
+
+            it('should return rollen for permitted organisationen', async () => {
+                query = {
+                    ...query,
+                    organisationIds: [orga.id],
+                };
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(query)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+                expect(response.body).toEqual(
+                    expect.objectContaining({
+                        items: expect.arrayContaining([
+                            expect.objectContaining({ id: rolleOnParent.id }),
+                            expect.objectContaining({ id: rolleOnSelf.id }),
+                        ]) as Array<RolleResponse>,
+                        total: 2,
+                        offset: 0,
+                        limit: 25,
+                    }),
+                );
+            });
+
+            it('should not return rollen when they dont match the provided organisation', async () => {
+                const rolleWithMismatchedRollenart: Rolle<true> = await rolleRepo.create(
+                    DoFactory.createRolle(false, {
+                        rollenart: RollenArt.SYSADMIN,
+                        administeredBySchulstrukturknoten: orga.id,
+                    }),
+                );
+                const rolleOnDifferentOrga: Rolle<true> = await rolleRepo.create(
+                    DoFactory.createRolle(false, { rollenart: RollenArt.LEIT }),
+                );
+                query = {
+                    ...query,
+                    organisationIds: [orga.id],
+                };
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .get(url)
+                    .query(query)
+                    .send();
+
+                expect(response.status).toBe(200);
+                expect(response.body).toBeInstanceOf(Object);
+                expect(response.body).not.toEqual(
+                    expect.objectContaining({
+                        items: expect.arrayContaining([
+                            expect.objectContaining({ id: rolleWithMismatchedRollenart.id }),
+                            expect.objectContaining({ id: rolleOnDifferentOrga.id }),
+                        ]) as Array<RolleResponse>,
+                    }),
+                );
+            });
+        });
     });
 
     describe('/POST rolle', () => {

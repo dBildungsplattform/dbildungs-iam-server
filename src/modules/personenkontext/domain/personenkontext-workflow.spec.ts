@@ -9,7 +9,8 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
@@ -901,6 +902,104 @@ describe('PersonenkontextWorkflow', () => {
             expect(result).toBe(undefined);
         });
 
+        it('should return an error for MPT rollen without MPT_ROLLEN_VERWALTEN permission', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+
+            const mptRolle: Rolle<true> = DoFactory.createRolle(true, {
+                id: faker.string.uuid(),
+                rollenart: RollenArt.LEIT,
+                merkmale: [RollenMerkmal.MPT_ROLLE],
+            });
+            rolleRepoMock.findByIds.mockResolvedValue(new Map([[mptRolle.id, mptRolle]]));
+
+            const result: Option<DomainError> = await anlage.checkPermissions(
+                permissions,
+                undefined,
+                'orgId',
+                [mptRolle.id],
+                OperationContext.PERSON_ANLEGEN,
+            );
+
+            expect(result).toBeInstanceOf(DomainError);
+            expect(permissions.hasSystemrechtAtOrganisation).toHaveBeenNthCalledWith(
+                1,
+                'orgId',
+                RollenSystemRecht.PERSONEN_ANLEGEN,
+            );
+            expect(permissions.hasSystemrechtAtOrganisation).toHaveBeenNthCalledWith(
+                2,
+                'orgId',
+                RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
+            );
+        });
+
+        it('should allow a non-allowlisted MPT rolle with limited creation and MPT permissions', async () => {
+            configMock.getOrThrow.mockReturnValueOnce({
+                LIMITED_ROLLENART_ALLOWLIST: [RollenArt.LERN],
+            });
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.hasSystemrechtAtOrganisation
+                .mockResolvedValueOnce(false)
+                .mockResolvedValueOnce(true)
+                .mockResolvedValueOnce(true);
+
+            const mptRolle: Rolle<true> = DoFactory.createRolle(true, {
+                id: faker.string.uuid(),
+                rollenart: RollenArt.LEIT,
+                merkmale: [RollenMerkmal.MPT_ROLLE],
+            });
+            rolleRepoMock.findByIds.mockResolvedValue(new Map([[mptRolle.id, mptRolle]]));
+
+            const result: Option<DomainError> = await anlage.checkPermissions(
+                permissions,
+                undefined,
+                'orgId',
+                [mptRolle.id],
+                OperationContext.PERSON_ANLEGEN,
+            );
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should reject a mixed assignment with a non-allowlisted non-MPT rolle', async () => {
+            configMock.getOrThrow.mockReturnValueOnce({
+                LIMITED_ROLLENART_ALLOWLIST: [RollenArt.LERN],
+            });
+            const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
+            permissions.hasSystemrechtAtOrganisation
+                .mockResolvedValueOnce(false)
+                .mockResolvedValueOnce(true)
+                .mockResolvedValueOnce(true);
+
+            const mptRolle: Rolle<true> = DoFactory.createRolle(true, {
+                id: faker.string.uuid(),
+                rollenart: RollenArt.LEIT,
+                merkmale: [RollenMerkmal.MPT_ROLLE],
+            });
+            const nonMptRolle: Rolle<true> = DoFactory.createRolle(true, {
+                id: faker.string.uuid(),
+                rollenart: RollenArt.LEIT,
+                merkmale: [],
+            });
+            rolleRepoMock.findByIds.mockResolvedValue(
+                new Map([
+                    [mptRolle.id, mptRolle],
+                    [nonMptRolle.id, nonMptRolle],
+                ]),
+            );
+
+            const result: Option<DomainError> = await anlage.checkPermissions(
+                permissions,
+                undefined,
+                'orgId',
+                [mptRolle.id, nonMptRolle.id],
+                OperationContext.PERSON_ANLEGEN,
+            );
+
+            expect(result).toBeInstanceOf(DomainError);
+        });
+
         it('should return undefined if context is PERSON_BEARBEITEN and user has systemrecht PERSONEN_VERWALTEN', async () => {
             const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
@@ -956,7 +1055,7 @@ describe('PersonenkontextWorkflow', () => {
                 });
 
                 it('should return error if config is not set for limited rollenarten', async () => {
-                    configMock.getOrThrow.mockReturnValueOnce({ LIMITED_ROLLENART_ALLOWLIST: undefined });
+                    configMock.getOrThrow.mockReturnValueOnce({ LIMITED_ROLLENART_ALLOWLIST: [] });
 
                     const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                     permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
