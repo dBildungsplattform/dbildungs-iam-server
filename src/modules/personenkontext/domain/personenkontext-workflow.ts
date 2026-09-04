@@ -260,66 +260,90 @@ export class PersonenkontextWorkflowAggregate {
             }
         }
 
-        if (operationContext === OperationContext.PERSON_ANLEGEN) {
-            // Check if logged in person has permission
-            const hasAnlegenPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
+        return this.checkOperationPermissions(permissions, organisationId, rolleIds, operationContext);
+    }
+
+    private async checkOperationPermissions(
+        permissions: IPersonPermissions,
+        organisationId: string,
+        rolleIds: RolleID[],
+        operationContext: OperationContext,
+    ): Promise<Option<DomainError>> {
+        switch (operationContext) {
+            case OperationContext.PERSON_ANLEGEN:
+                return this.checkCreatePermissions(permissions, organisationId, rolleIds);
+            case OperationContext.PERSON_BEARBEITEN:
+                return this.checkEditPermissions(permissions, organisationId);
+        }
+    }
+
+    private async checkEditPermissions(
+        permissions: IPersonPermissions,
+        organisationId: string,
+    ): Promise<Option<DomainError>> {
+        const hasVerwaltenPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
+            organisationId,
+            RollenSystemRecht.PERSONEN_VERWALTEN,
+        );
+        if (!hasVerwaltenPermissionAtOrga) {
+            return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
+        }
+
+        return;
+    }
+
+    private async checkCreatePermissions(
+        permissions: IPersonPermissions,
+        organisationId: string,
+        rolleIds: RolleID[],
+    ): Promise<Option<DomainError>> {
+        const hasAnlegenPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
+            organisationId,
+            RollenSystemRecht.PERSONEN_ANLEGEN,
+        );
+
+        const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);
+        const includesMPTRollen: boolean = this.includesMPTRollen(rollen.values());
+        if (includesMPTRollen) {
+            const hasSystemrecht: boolean = await permissions.hasSystemrechtAtOrganisation(
                 organisationId,
-                RollenSystemRecht.PERSONEN_ANLEGEN,
+                RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
             );
-
-            const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);
-            const includesMPTRollen: boolean = this.includesMPTRollen(rollen.values());
-            if (includesMPTRollen) {
-                const hasSystemrecht: boolean = await permissions.hasSystemrechtAtOrganisation(
-                    organisationId,
-                    RollenSystemRecht.MPT_ROLLEN_VERWALTEN,
-                );
-                if (!hasSystemrecht) {
-                    return new MissingPermissionsError('Unauthorized to manage MPT-Rollen at the organisation');
-                }
-            }
-
-            if (hasAnlegenPermissionAtOrga) {
-                return undefined;
-            }
-
-            const hasLimitedCreationPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
-                organisationId,
-                RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
-            );
-            if (!hasLimitedCreationPermissionAtOrga) {
-                return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
-            }
-
-            const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
-
-            const allowedRollenArten: RollenArt[] = portalConfig.LIMITED_ROLLENART_ALLOWLIST;
-
-            for (const rolle of rollen.values()) {
-                const rollenArtNotAllowed: boolean = !allowedRollenArten.includes(rolle.rollenart);
-                if (includesMPTRollen) {
-                    // implies user has RollenSystemRecht.MPT_ROLLEN_VERWALTEN
-                    if (rollenArtNotAllowed && !rolle.hasMerkmal(RollenMerkmal.MPT_ROLLE)) {
-                        return new MissingPermissionsError('Unauthorized to manage rollenart at the organisation');
-                    }
-                } else {
-                    if (rollenArtNotAllowed) {
-                        return new MissingPermissionsError('Unauthorized to manage rollenart at the organisation');
-                    }
-                }
-            }
-            return;
-        } else if (operationContext === OperationContext.PERSON_BEARBEITEN) {
-            const hasVerwaltenPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
-                organisationId,
-                RollenSystemRecht.PERSONEN_VERWALTEN,
-            );
-            if (hasVerwaltenPermissionAtOrga) {
-                return;
+            if (!hasSystemrecht) {
+                return new MissingPermissionsError('Unauthorized to manage MPT-Rollen at the organisation');
             }
         }
 
-        return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
+        if (hasAnlegenPermissionAtOrga) {
+            return undefined;
+        }
+
+        const hasLimitedCreationPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
+            organisationId,
+            RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
+        );
+        if (!hasLimitedCreationPermissionAtOrga) {
+            return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
+        }
+
+        const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
+
+        const allowedRollenArten: RollenArt[] = portalConfig.LIMITED_ROLLENART_ALLOWLIST;
+        if (!this.areRollenAllowedForLimitedCreation(rollen.values(), allowedRollenArten)) {
+            return new MissingPermissionsError('Unauthorized to manage rollenart at the organisation');
+        }
+
+        return;
+    }
+
+    private areRollenAllowedForLimitedCreation(
+        rollen: Iterable<Rolle<true>>,
+        allowedRollenArten: RollenArt[],
+    ): boolean {
+        return Array.from(rollen).every(
+            (rolle: Rolle<true>) =>
+                allowedRollenArten.includes(rolle.rollenart) || rolle.hasMerkmal(RollenMerkmal.MPT_ROLLE),
+        );
     }
 
     private includesMPTRollen(rollen: Iterable<Rolle<true>>): boolean {
