@@ -1,6 +1,12 @@
-import { envToOptionalBoolean, envToOptionalInteger, envToStringArray } from './utils.js';
+import { envToEnumArray, envToOptionalBoolean, envToOptionalInteger, envToStringArray } from './utils.js';
 
 const TEST_KEY: string = 'CONFIG_UTIL_TEST_KEY';
+
+enum TestConfigEnum {
+    FOO = 'FOO',
+    BAR = 'BAR',
+    BAZ = 'BAZ',
+}
 
 describe('Config Utils', () => {
     describe('envToOptionalBoolean', () => {
@@ -66,6 +72,29 @@ describe('Config Utils', () => {
             delete process.env[TEST_KEY];
 
             expect(envToStringArray(TEST_KEY)).toBeUndefined();
+        });
+    });
+
+    describe('envToEnumArray', () => {
+        it.each([
+            ['', undefined],
+            ['FOO,BAR', [TestConfigEnum.FOO, TestConfigEnum.BAR]],
+            ['FOO, BAR, BAZ', [TestConfigEnum.FOO, TestConfigEnum.BAR, TestConfigEnum.BAZ]],
+            ['FOO,INVALID,BAR', [TestConfigEnum.FOO, TestConfigEnum.BAR]],
+            ['INVALID,UNKNOWN', []],
+        ])(
+            'when environment variable is "%s", should return %s',
+            (input: string | undefined, expected: TestConfigEnum[] | undefined) => {
+                process.env[TEST_KEY] = input;
+
+                expect(envToEnumArray(TEST_KEY, TestConfigEnum)).toEqual(expected);
+            },
+        );
+
+        it('should return undefined if the environment variable is not set', () => {
+            delete process.env[TEST_KEY];
+
+            expect(envToEnumArray(TEST_KEY, TestConfigEnum)).toBeUndefined();
         });
     });
 });

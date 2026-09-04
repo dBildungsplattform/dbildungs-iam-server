@@ -1,3 +1,5 @@
+import { isEnum } from 'class-validator';
+
 /**
  * Reads the environment variable and returns an optional boolean.
  * Depending on the input:
@@ -67,4 +69,8 @@ export function envToStringArray(key: string): string[] | undefined {
     }
 
     return value.split(',').map((item: string) => item.trim());
+}
+
+export function envToEnumArray<TEnum extends string>(key: string, enumObject: Record<string, TEnum>): TEnum[] | undefined {
+    return envToStringArray(key)?.filter((value: string): value is TEnum => isEnum(value, enumObject));
 }
