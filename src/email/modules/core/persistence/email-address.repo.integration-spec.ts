@@ -43,7 +43,6 @@ describe('EmailRepo', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        orm.em.clear();
     });
 
     it('should be defined', () => {
@@ -88,7 +87,6 @@ describe('EmailRepo', () => {
 
         beforeEach(async () => {
             createdMail = await createAndSaveMail();
-            orm.em.clear();
         });
 
         it('should return EmailAddress if address exists', async () => {
@@ -113,8 +111,6 @@ describe('EmailRepo', () => {
             await setStatusAndSave(EmailAddressStatusEnum.FAILED);
             await setStatusAndSave(EmailAddressStatusEnum.SUSPENDED);
 
-            orm.em.clear();
-
             const result: Option<EmailAddress<true>> = await sut.findEmailAddress(createdMail.address);
 
             expect(result).toBeDefined();
@@ -137,7 +133,6 @@ describe('EmailRepo', () => {
 
         beforeEach(async () => {
             createdMail = await createAndSaveMail();
-            orm.em.clear();
         });
 
         it('should return true if email address exists', async () => {
@@ -160,7 +155,6 @@ describe('EmailRepo', () => {
             await createAndSaveMail(undefined, 0, spshPersonId);
             await createAndSaveMail(undefined, 1, spshPersonId);
             await createAndSaveMail(undefined, 1, otherSpshPersonId);
-            orm.em.clear();
         });
 
         it('should return all email addresses for the given spshPersonId', async () => {
@@ -203,8 +197,6 @@ describe('EmailRepo', () => {
             mail5 = await createAndSaveMail(undefined, 0, spshPersonIds[2]);
             await setStatus(mail5, EmailAddressStatusEnum.ACTIVE);
             await setStatus(mail5, EmailAddressStatusEnum.SUSPENDED);
-
-            orm.em.clear();
         });
 
         it('should return primary email addresses for the given spshPersonIds', async () => {
@@ -232,8 +224,6 @@ describe('EmailRepo', () => {
             await setStatus(mail3, EmailAddressStatusEnum.ACTIVE);
             await setStatus(mail3, EmailAddressStatusEnum.SUSPENDED);
 
-            orm.em.clear();
-
             const result: EmailAddress<true>[] = await sut.findPrimaryBySpshPersonIds([pid]);
 
             expect(result).toHaveLength(1);
@@ -251,8 +241,6 @@ describe('EmailRepo', () => {
             mail1 = await setStatus(mail1, EmailAddressStatusEnum.PENDING);
             mail1 = await setStatus(mail1, EmailAddressStatusEnum.ACTIVE);
             mail2 = await setStatus(mail2, EmailAddressStatusEnum.PENDING);
-
-            orm.em.clear();
 
             const result: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(spshPersonId);
 
@@ -371,7 +359,6 @@ describe('EmailRepo', () => {
         it('should increment priorities for emails', async () => {
             const mails: EmailAddress<true>[] = await createMultipleEmails(4);
             const targetMail: EmailAddress<true> = mails[3]!;
-            orm.em.clear();
 
             const result: Result<EmailAddress<true>[]> = await sut.shiftPriorities(targetMail, 0);
 
@@ -395,7 +382,6 @@ describe('EmailRepo', () => {
         it('should be able to move priority forwards', async () => {
             const mails: EmailAddress<true>[] = await createMultipleEmails(4);
             const targetMail: EmailAddress<true> = mails[0]!;
-            orm.em.clear();
 
             const result: Result<EmailAddress<true>[]> = await sut.shiftPriorities(targetMail, 2);
 
@@ -438,8 +424,6 @@ describe('EmailRepo', () => {
             const mail1: EmailAddress<true> = await createMail(1);
             const mail2: EmailAddress<true> = await createMail(3);
             const mail3: EmailAddress<true> = await createMail(4);
-
-            orm.em.clear();
 
             const result: Result<EmailAddress<true>[]> = await sut.shiftPriorities(mail3, 0);
 
@@ -503,8 +487,6 @@ describe('EmailRepo', () => {
             await createAndSaveMail(faker.internet.email(), 1, personId, oxUserCounter, undefined);
             await createAndSaveMail(faker.internet.email(), 2, personId, oxUserCounter, undefined);
 
-            orm.em.clear();
-
             await sut.ensureStatusesAndCronDateForPerson(personId, cronDate);
 
             const emailsAfterwards: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(personId);
@@ -540,8 +522,6 @@ describe('EmailRepo', () => {
             await vi.advanceTimersByTimeAsync(10);
             await sut.ensureStatusesAndCronDateForPerson(personId, cronDate);
 
-            orm.em.clear();
-
             const emailsAfterwards: EmailAddress<true>[] = await sut.findBySpshPersonIdSortedByPriorityAsc(personId);
 
             expect(emailsAfterwards[0]?.sortedStatuses).toEqual([
@@ -562,8 +542,6 @@ describe('EmailRepo', () => {
             expect(found).toBeDefined();
 
             await sut.delete(mail);
-
-            orm.em.clear();
 
             const afterDelete: Option<EmailAddress<true>> = await sut.findEmailAddress(mail.address);
             expect(afterDelete).toBeUndefined();

@@ -43,7 +43,6 @@ describe('ImportDataRepository', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        orm.em.clear();
         vi.resetAllMocks();
     });
 
@@ -275,7 +274,6 @@ describe('ImportDataRepository', () => {
 
         it('should delete all the import data items for the importVorgnagsId', async () => {
             const result: void = await sut.deleteByImportVorgangId(importvorgangId);
-            orm.em.clear();
 
             const [findResult, findTotal]: [Option<ImportDataItem<true>[]>, number] =
                 await sut.findByImportVorgangId(importvorgangId);

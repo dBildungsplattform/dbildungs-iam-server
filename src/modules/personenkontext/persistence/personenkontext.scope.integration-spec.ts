@@ -63,7 +63,6 @@ describe('PersonenkontextScope', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        orm.em.clear();
     });
 
     describe('findBy', () => {

@@ -36,7 +36,6 @@ describe('MeldungRepo', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        orm.em.clear();
     });
 
     it('should be defined', () => {

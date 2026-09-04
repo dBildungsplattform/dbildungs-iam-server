@@ -205,7 +205,6 @@ describe('EmailRepo', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
-        orm.em.clear();
     });
 
     it('should be defined', () => {
@@ -899,7 +898,6 @@ describe('EmailRepo', () => {
             );
 
             await sut.setUpdatedAtToFixedPointInTime(addressId);
-            orm.em.clear();
             const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(address);
 
             expect(emailAddress?.updatedAt).toEqual(new Date(2027, 7));
