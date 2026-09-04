@@ -956,7 +956,7 @@ describe('PersonenkontextWorkflow', () => {
                 });
 
                 it('should return error if config is not set for limited rollenarten', async () => {
-                    configMock.getOrThrow.mockReturnValueOnce({ LIMITED_ROLLENART_ALLOWLIST: undefined });
+                    configMock.getOrThrow.mockReturnValueOnce({ LIMITED_ROLLENART_ALLOWLIST: [] });
 
                     const permissions: DeepMocked<PersonPermissions> = createPersonPermissionsMock();
                     permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
