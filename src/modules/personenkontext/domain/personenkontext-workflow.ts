@@ -98,7 +98,7 @@ export class PersonenkontextWorkflowAggregate {
         // If organisationId is provided and it's not in the filtered results, fetch it explicitly
         if (
             this.selectedOrganisationId &&
-            !organisationsExceptKlassen.find((orga: Organisation<true>) => orga.id === this.selectedOrganisationId)
+            !organisationsExceptKlassen.some((orga: Organisation<true>) => orga.id === this.selectedOrganisationId)
         ) {
             const selectedOrg: Option<Organisation<true>> = await this.organisationRepository.findById(
                 this.selectedOrganisationId,

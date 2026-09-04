@@ -26,7 +26,6 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { uniq } from 'lodash-es';
 
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -193,10 +192,13 @@ export class RolleController {
         const administeredOrganisations: Map<string, Organisation<true>> = await this.organisationRepository.findByIds(
             administeredBySchulstrukturknotenIds,
         );
+        const uniqueServiceProviderIds: ServiceProviderID[] = Array.from(
+            new Set(rollen.flatMap((r: Rolle<true>): ServiceProviderID[] => r.serviceProviderIds)),
+        );
         const serviceProviders: Map<
             ServiceProviderID,
             ServiceProvider<true>
-        > = await this.serviceProviderRepo.findByIds(uniq(rollen.flatMap((r: Rolle<true>) => r.serviceProviderIds)));
+        > = await this.serviceProviderRepo.findByIds(uniqueServiceProviderIds);
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
                 const sps: ServiceProvider<true>[] = r.serviceProviderIds

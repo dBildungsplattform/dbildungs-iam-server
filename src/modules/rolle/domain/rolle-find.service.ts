@@ -157,25 +157,27 @@ export class RolleFindService {
         const organisationBounds: EmptyOrganisationBounds | BoundedOrganisationBounds =
             await this.resolveOrganisationBoundsWithSelection(permittedOrgas, [params.organisationId]);
 
-        let rolleFindByParams: RolleFindByParameters;
+        let rollenArten: RollenArt[];
+        let allowedOrganisationIds: OrganisationID[];
         switch (organisationBounds.kind) {
             case OrganisationBoundsKind.BOUNDED:
-                const rollenArten: RollenArt[] = await this.resolveAllowedRollenArten(
+                rollenArten = await this.resolveAllowedRollenArten(
                     organisationBounds.selectedAndPermittedOrgas,
                     params.rollenArten,
                 );
-                rolleFindByParams = this.createRolleFindByParams(
-                    params,
-                    {
-                        allowedOrganisationIds: organisationBounds.selectedAndPermittedOrgasWithParents,
-                        rollenArten,
-                    },
-                    true,
-                );
+                allowedOrganisationIds = organisationBounds.selectedAndPermittedOrgasWithParents;
                 break;
             case OrganisationBoundsKind.EMPTY:
                 return [[], 0];
         }
+        const rolleFindByParams: RolleFindByParameters = this.createRolleFindByParams(
+            params,
+            {
+                allowedOrganisationIds,
+                rollenArten,
+            },
+            true,
+        );
 
         return this.rolleRepo.findBy(rolleFindByParams);
     }
@@ -239,35 +241,36 @@ export class RolleFindService {
             params.organisationIds,
         );
 
-        let rolleFindByParams: RolleFindByParameters;
+        let rollenArten: RollenArt[] | undefined;
+        let allowedOrganisationIds: OrganisationID[] | undefined;
+        let shouldExcludeMptRollen: boolean;
         switch (organisationBounds.kind) {
             case OrganisationBoundsKind.BOUNDED:
-                const allowedRollenarten: Array<RollenArt> = await this.resolveAllowedRollenArten(
+                rollenArten = await this.resolveAllowedRollenArten(organisationBounds.selectedAndPermittedOrgas);
+                allowedOrganisationIds = organisationBounds.selectedAndPermittedOrgasWithParents;
+                shouldExcludeMptRollen = await this.shouldExcludeMptRollen(
+                    params.permissions,
+                    params.requestedSystemrechte,
                     organisationBounds.selectedAndPermittedOrgas,
-                );
-                rolleFindByParams = this.createRolleFindByParams(
-                    params,
-                    {
-                        allowedOrganisationIds: organisationBounds.selectedAndPermittedOrgasWithParents,
-                        rollenArten: allowedRollenarten,
-                    },
-                    await this.shouldExcludeMptRollen(
-                        params.permissions,
-                        params.requestedSystemrechte,
-                        organisationBounds.selectedAndPermittedOrgas,
-                    ),
                 );
                 break;
             case OrganisationBoundsKind.UNBOUNDED:
-                rolleFindByParams = this.createRolleFindByParams(
-                    params,
-                    { allowedOrganisationIds: undefined, rollenArten: undefined },
-                    await this.shouldExcludeMptRollen(params.permissions, params.requestedSystemrechte),
+                rollenArten = undefined;
+                allowedOrganisationIds = undefined;
+                shouldExcludeMptRollen = await this.shouldExcludeMptRollen(
+                    params.permissions,
+                    params.requestedSystemrechte,
                 );
                 break;
             case OrganisationBoundsKind.EMPTY:
                 return [[], 0];
         }
+
+        const rolleFindByParams: RolleFindByParameters = this.createRolleFindByParams(
+            params,
+            { allowedOrganisationIds, rollenArten },
+            shouldExcludeMptRollen,
+        );
 
         return this.rolleRepo.findBy(rolleFindByParams);
     }

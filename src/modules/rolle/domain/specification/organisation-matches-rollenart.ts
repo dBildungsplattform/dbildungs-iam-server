@@ -1,4 +1,3 @@
-import { uniq } from 'lodash-es';
 import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../../organisation/domain/organisation.js';
 import { RollenArt } from '../rolle.enums.js';
@@ -41,8 +40,9 @@ export class OrganisationMatchesRollenart {
 
     public static getAllowedRollenartenForOrganisationTypes(organisationTypes: OrganisationsTyp[]): Set<RollenArt> {
         const rollenartSet: Set<RollenArt> = new Set();
+        const distinctOrganisationTypes: Set<OrganisationsTyp> = new Set(organisationTypes);
 
-        for (const orgaTyp of uniq(organisationTypes)) {
+        for (const orgaTyp of distinctOrganisationTypes) {
             const orgaRollenarten: Set<RollenArt> =
                 OrganisationMatchesRollenart.getAllowedRollenartenForOrganisationsTyp(orgaTyp);
 
